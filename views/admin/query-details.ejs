@@ -1,0 +1,46 @@
+<%- include('../partials/layout-header', { title: 'Query Details', role: 'admin', active: 'queries' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Query Details</h1>
+    <p class="text-muted mb-0">Review and respond to a public contact query.</p>
+  </div>
+  <a class="btn btn-light" href="<%= !query.AdminRemark ? '/hms/admin/unread-queries.php' : '/hms/admin/read-query.php' %>">Back to Queries</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="hms-card p-4">
+      <h2 class="h5 mb-3">Submitted Query</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-4 text-muted">Full name</dt>
+        <dd class="col-sm-8"><%= query.fullname %></dd>
+        <dt class="col-sm-4 text-muted">Email</dt>
+        <dd class="col-sm-8"><%= query.email %></dd>
+        <dt class="col-sm-4 text-muted">Contact</dt>
+        <dd class="col-sm-8"><%= query.contactno %></dd>
+        <dt class="col-sm-4 text-muted">Message</dt>
+        <dd class="col-sm-8"><%= query.message %></dd>
+        <dt class="col-sm-4 text-muted">Query date</dt>
+        <dd class="col-sm-8"><%= query.PostingDate %></dd>
+      </dl>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="hms-card p-4">
+      <h2 class="h5 mb-3">Admin Remark</h2>
+      <% if (!query.AdminRemark) { %>
+        <form method="post" action="/hms/admin/query-details.php?id=<%= query.id %>">
+          <label class="form-label" for="adminremark">Response note</label>
+          <textarea class="form-control" id="adminremark" name="adminremark" rows="6" required></textarea>
+          <button type="submit" name="update" class="btn btn-primary mt-3">
+            <i class="bi bi-send me-1"></i>Save Remark
+          </button>
+        </form>
+      <% } else { %>
+        <p><%= query.AdminRemark %></p>
+        <p class="text-muted small mb-0">Last updated: <%= query.LastupdationDate || 'Not available' %></p>
+      <% } %>
+    </div>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

@@ -1,0 +1,105 @@
+<%- include('../partials/layout-header', { title: 'Doctor Dashboard', role: 'doctor', active: 'dashboard' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Doctor Dashboard</h1>
+    <div class="text-muted">Today's schedule, prescription work, and follow-up planning.</div>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-primary" href="/hms/doctor/availability.php"><i class="bi bi-clock-history me-1"></i>Availability</a>
+    <a class="btn btn-primary" href="/hms/doctor/prescriptions.php"><i class="bi bi-file-medical me-1"></i>Prescription</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-12 col-sm-6 col-xl-3">
+    <a class="hms-card hms-stat d-block text-reset" href="/hms/doctor/appointment-history.php?date=<%= today %>">
+      <span class="icon"><i class="bi bi-calendar-day"></i></span>
+      <div class="value"><%= stats.today %></div>
+      <div class="label">Today</div>
+    </a>
+  </div>
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="hms-card hms-stat">
+      <span class="icon"><i class="bi bi-hourglass-split"></i></span>
+      <div class="value"><%= stats.pending %></div>
+      <div class="label">Pending</div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="hms-card hms-stat">
+      <span class="icon"><i class="bi bi-check2-circle"></i></span>
+      <div class="value"><%= stats.completed %></div>
+      <div class="label">Completed</div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6 col-xl-3">
+    <a class="hms-card hms-stat d-block text-reset" href="/hms/doctor/manage-patient.php">
+      <span class="icon"><i class="bi bi-people"></i></span>
+      <div class="value"><%= stats.patients %></div>
+      <div class="label">Patients</div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="hms-card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Recent &amp; Scheduled Appointments</h2>
+        <input class="form-control form-control-sm" style="max-width:240px" placeholder="Search" data-table-search="#todayTable">
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="todayTable" data-sortable>
+          <thead>
+          <tr>
+            <th data-sort>Patient</th>
+            <th data-sort>Date / Time</th>
+            <th data-sort>Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% appointments.forEach(function(appointment) { %>
+            <tr>
+              <td>
+                <div class="fw-semibold"><%= appointment.fullName %></div>
+                <div class="small text-muted"><%= appointment.email %></div>
+              </td>
+              <td><%= appointment.appointmentDate %> <%= appointment.appointmentTime %></td>
+              <td><%- statusBadge(appointment.status) %></td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="/hms/doctor/prescriptions.php?appointment_id=<%= appointment.id %>">Record</a>
+              </td>
+            </tr>
+          <% }); %>
+          <% if (!appointments.length) { %>
+            <tr><td colspan="4" class="text-center text-muted py-4">No appointments scheduled.</td></tr>
+          <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="hms-card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Follow-ups</h2>
+        <span class="badge text-bg-light"><%= followups.length %></span>
+      </div>
+      <% if (followups.length) { %>
+        <div class="timeline">
+          <% followups.forEach(function(followup) { %>
+            <div class="timeline-item">
+              <div class="fw-semibold"><%= followup.fullName %></div>
+              <div class="small text-muted"><%= followup.followup_date %></div>
+              <div class="small"><%= followup.diagnosis %></div>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="text-muted">No follow-up appointments recorded yet.</div>
+      <% } %>
+    </div>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

@@ -1,0 +1,47 @@
+<%- include('../partials/layout-header', { title: patient ? 'Edit Patient' : 'Add Patient', role: 'doctor', active: 'patients' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1><%= patient ? 'Update Patient' : 'Add Patient' %></h1>
+    <div class="text-muted">Record patient demographics and clinical notes.</div>
+  </div>
+  <a class="btn btn-light" href="/hms/doctor/manage-patient.php">Back to Patients</a>
+</div>
+<div class="hms-card p-4" style="max-width:760px">
+  <form method="post" action="<%= actionUrl %>">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Patient Name</label>
+        <input class="form-control" name="patname" value="<%= patient ? patient.PatientName : '' %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Contact Number</label>
+        <input class="form-control" name="patcontact" value="<%= patient ? patient.PatientContno : '' %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" name="patemail" value="<%= patient ? patient.PatientEmail : '' %>" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Gender</label>
+        <select class="form-select" name="gender">
+          <option value="Male" <%= patient && String(patient.PatientGender).toLowerCase() === 'male' ? 'selected' : '' %>>Male</option>
+          <option value="Female" <%= patient && String(patient.PatientGender).toLowerCase() === 'female' ? 'selected' : '' %>>Female</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Age</label>
+        <input type="number" class="form-control" name="patage" value="<%= patient ? patient.PatientAge : '' %>" required>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Address</label>
+        <textarea class="form-control" name="pataddress" rows="2" required><%= patient ? patient.PatientAdd : '' %></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Medical History</label>
+        <textarea class="form-control" name="medhis" rows="3" required><%= patient ? patient.PatientMedhis : '' %></textarea>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-3" type="submit"><%= patient ? 'Update Patient' : 'Add Patient' %></button>
+  </form>
+</div>
+<%- include('../partials/layout-footer') %>

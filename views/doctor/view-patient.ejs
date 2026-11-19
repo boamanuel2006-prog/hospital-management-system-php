@@ -1,0 +1,63 @@
+<%- include('../partials/layout-header', { title: 'Patient Details', role: role, active: 'patients' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Patient Details</h1>
+    <div class="text-muted">Clinical patient record and medical history.</div>
+  </div>
+  <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#historyModal">Add History</button>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="hms-card p-3">
+      <h2 class="h5 mb-3"><%= patient.PatientName %></h2>
+      <div class="mb-2"><span class="text-muted">Email</span><div><%= patient.PatientEmail %></div></div>
+      <div class="mb-2"><span class="text-muted">Contact</span><div><%= patient.PatientContno %></div></div>
+      <div class="mb-2"><span class="text-muted">Gender / Age</span><div><%= patient.PatientGender %> / <%= patient.PatientAge %></div></div>
+      <div class="mb-2"><span class="text-muted">Address</span><div><%= patient.PatientAdd %></div></div>
+      <div><span class="text-muted">Initial History</span><div><%= patient.PatientMedhis %></div></div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="hms-card p-3">
+      <h2 class="h5 mb-3">Medical History</h2>
+      <div class="timeline">
+        <% history.forEach(function(item) { %>
+          <div class="timeline-item">
+            <div class="fw-semibold"><%= item.CreationDate %></div>
+            <div class="small text-muted">BP: <%= item.BloodPressure %> | Sugar: <%= item.BloodSugar %> | Weight: <%= item.Weight %> | Temp: <%= item.Temperature %></div>
+            <div><%= item.MedicalPres %></div>
+          </div>
+        <% }); %>
+        <% if (!history.length) { %>
+          <div class="text-muted">No medical history added yet.</div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form class="modal-content" method="post" action="<%= actionUrl %>">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Medical History</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-sm-6"><label class="form-label">Blood Pressure</label><input class="form-control" name="bp" required></div>
+          <div class="col-sm-6"><label class="form-label">Blood Sugar</label><input class="form-control" name="bs" required></div>
+          <div class="col-sm-6"><label class="form-label">Weight</label><input class="form-control" name="weight" required></div>
+          <div class="col-sm-6"><label class="form-label">Temperature</label><input class="form-control" name="temp" required></div>
+        </div>
+        <div class="mt-3"><label class="form-label">Prescription / Notes</label><textarea class="form-control" name="pres" rows="5" required></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

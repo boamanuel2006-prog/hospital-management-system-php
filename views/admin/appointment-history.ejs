@@ -1,0 +1,98 @@
+<%- include('../partials/layout-header', { title: 'Appointment Management', role: 'admin', active: 'appointments' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Appointment Management</h1>
+    <div class="text-muted">Approve, complete, cancel, filter, and export appointments.</div>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-secondary" href="/hms/admin/export-appointments.php?format=csv&<%= queryString %>"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
+  </div>
+</div>
+
+<div class="hms-card p-3 mb-3">
+  <form class="row g-3 align-items-end" method="get" action="/hms/admin/appointment-history.php">
+    <div class="col-md-3">
+      <label class="form-label">Search</label>
+      <input class="form-control" name="q" value="<%= filters.q %>" placeholder="Patient, doctor, specialization">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Status</label>
+      <select class="form-select" name="status">
+        <option value="">All</option>
+        <% ['Pending', 'Approved', 'Completed', 'Cancelled'].forEach(function(option) { %>
+          <option value="<%= option %>" <%= filters.status === option ? 'selected' : '' %>><%= option %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">From</label>
+      <input class="form-control" type="date" name="from" value="<%= filters.from %>">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">To</label>
+      <input class="form-control" type="date" name="to" value="<%= filters.to %>">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Doctor</label>
+      <select class="form-select" name="doctor">
+        <option value="">All</option>
+        <% doctors.forEach(function(d) { %>
+          <option value="<%= d.id %>" <%= Number(filters.doctor) === Number(d.id) ? 'selected' : '' %>><%= d.doctorName %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="col-md-1 d-grid">
+      <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+    </div>
+  </form>
+</div>
+
+<div class="hms-card p-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h5 mb-0">Appointments</h2>
+    <span class="text-muted small"><%= rows.length %> result(s)</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" data-sortable>
+      <thead>
+      <tr>
+        <th data-sort>#</th>
+        <th data-sort>Patient</th>
+        <th data-sort>Doctor</th>
+        <th data-sort>Date / Time</th>
+        <th data-sort>Status</th>
+        <th class="text-end">Manage</th>
+      </tr>
+      </thead>
+      <tbody>
+      <% rows.forEach(function(row) { %>
+        <tr>
+          <td><%= row.id %></td>
+          <td><%= row.fullName %></td>
+          <td>
+            <div class="fw-semibold"><%= row.doctorName %></div>
+            <div class="small text-muted"><%= row.doctorSpecialization %></div>
+          </td>
+          <td><%= row.appointmentDate %> <%= row.appointmentTime %></td>
+          <td><%- statusBadge(row.status) %></td>
+          <td class="text-end">
+            <form method="post" action="/hms/admin/appointment-history.php" class="d-inline-flex gap-2 align-items-center">
+              <input type="hidden" name="appointment_id" value="<%= row.id %>">
+              <select class="form-select form-select-sm" name="status">
+                <% ['Pending', 'Approved', 'Completed', 'Cancelled'].forEach(function(option) { %>
+                  <option value="<%= option %>" <%= row.status === option ? 'selected' : '' %>><%= option %></option>
+                <% }); %>
+              </select>
+              <button class="btn btn-sm btn-primary" type="submit">Save</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %>
+        <tr><td colspan="6" class="text-center text-muted py-4">No appointments match the selected filters.</td></tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

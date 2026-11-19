@@ -1,0 +1,48 @@
+<%- include('../partials/layout-header', { title: 'Clinical Patient Records', role: 'admin', active: 'patients' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Clinical Patient Records</h1>
+    <p class="text-muted mb-0">Inspect clinical patient records and medical histories.</p>
+  </div>
+</div>
+
+<div class="hms-card p-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+    <h2 class="h5 mb-0">Patients</h2>
+    <input type="search" class="form-control" style="max-width: 320px;" placeholder="Search patients..." data-table-search="#adminPatientsTable">
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle" id="adminPatientsTable" data-sortable>
+      <thead>
+      <tr>
+        <th data-sort>#</th>
+        <th data-sort>Patient Name</th>
+        <th data-sort>Contact</th>
+        <th data-sort>Gender</th>
+        <th data-sort>Doctor</th>
+        <th data-sort>Created</th>
+        <th class="text-end">Action</th>
+      </tr>
+      </thead>
+      <tbody>
+      <% patients.forEach(function(p, index) { %>
+        <tr>
+          <td><%= index + 1 %></td>
+          <td class="fw-semibold"><%= p.PatientName %></td>
+          <td><%= p.PatientContno %></td>
+          <td><%= p.PatientGender %></td>
+          <td><%= p.doctorName || 'N/A' %></td>
+          <td><%= p.CreationDate %></td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary" href="/hms/admin/view-patient.php?viewid=<%= p.ID %>"><i class="bi bi-eye"></i> View</a>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!patients.length) { %>
+        <tr><td colspan="7" class="text-center text-muted py-4">No patients found.</td></tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

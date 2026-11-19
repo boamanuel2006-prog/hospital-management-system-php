@@ -1,0 +1,67 @@
+<%- include('../partials/layout-header', { title: 'Notifications', role: 'admin', active: 'notifications' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Notifications</h1>
+    <div class="text-muted">New appointment requests, contact queries, and workflow alerts.</div>
+  </div>
+  <% if (notifications.length) { %>
+    <form method="post" action="/hms/admin/notifications.php">
+      <button class="btn btn-outline-primary" type="submit">Mark All Read</button>
+    </form>
+  <% } %>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="hms-card p-3">
+      <h2 class="h5 mb-3">System Notifications</h2>
+      <% if (notifications.length) { %>
+        <div class="list-group list-group-flush">
+          <% notifications.forEach(function(notification) { %>
+            <div class="list-group-item px-0 d-flex gap-3 justify-content-between align-items-start">
+              <div>
+                <div class="fw-semibold">
+                  <%= notification.title %>
+                  <% if (Number(notification.is_read) === 0) { %><span class="badge text-bg-primary">New</span><% } %>
+                </div>
+                <div class="text-muted small"><%= notification.created_at %></div>
+                <div><%= notification.message %></div>
+              </div>
+              <% if (Number(notification.is_read) === 0) { %>
+                <form method="post" action="/hms/admin/notifications.php">
+                  <input type="hidden" name="id" value="<%= notification.id %>">
+                  <button class="btn btn-sm btn-outline-secondary" type="submit">Read</button>
+                </form>
+              <% } %>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="text-muted">No system notifications yet.</div>
+      <% } %>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="hms-card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Unread Queries</h2>
+        <a class="btn btn-sm btn-outline-primary" href="/hms/admin/unread-queries.php">Open Queries</a>
+      </div>
+      <% if (queries.length) { %>
+        <div class="timeline">
+          <% queries.forEach(function(query) { %>
+            <div class="timeline-item">
+              <div class="fw-semibold"><%= query.fullname %></div>
+              <div class="small text-muted"><%= query.email %> | <%= query.contactno %></div>
+              <div class="small"><%= query.message %></div>
+              <a class="small" href="/hms/admin/query-details.php?id=<%= query.id %>">View query</a>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="text-muted">No unread contact queries.</div>
+      <% } %>
+    </div>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

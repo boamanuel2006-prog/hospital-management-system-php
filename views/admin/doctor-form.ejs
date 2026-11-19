@@ -1,0 +1,56 @@
+<%- include('../partials/layout-header', { title: doctor ? 'Edit Doctor' : 'Add Doctor', role: 'admin', active: 'doctors' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1><%= doctor ? 'Edit Doctor' : 'Add Doctor' %></h1>
+    <p class="text-muted mb-0"><%= doctor ? 'Update doctor profile details.' : 'Create a doctor login and profile.' %></p>
+  </div>
+  <a class="btn btn-light" href="/hms/admin/manage-doctors.php">Back to Doctors</a>
+</div>
+
+<div class="hms-card p-4">
+  <form method="post" action="<%= actionUrl %>">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Specialization</label>
+        <select class="form-select" name="Doctorspecialization" required>
+          <option value="">Select specialization</option>
+          <% specializations.forEach(function(row) { %>
+            <option value="<%= row.specilization %>" <%= doctor && doctor.specilization === row.specilization ? 'selected' : '' %>><%= row.specilization %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Doctor name</label>
+        <input type="text" class="form-control" name="docname" value="<%= doctor ? doctor.doctorName : '' %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Consultancy fees</label>
+        <input type="number" min="0" step="0.01" class="form-control" name="docfees" value="<%= doctor ? doctor.docFees : '' %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Contact number</label>
+        <input type="text" class="form-control" name="doccontact" value="<%= doctor ? doctor.contactno : '' %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" name="docemail" value="<%= doctor ? doctor.docEmail : '' %>" <%= doctor ? 'readonly' : 'required' %>>
+      </div>
+      <% if (!doctor) { %>
+        <div class="col-md-6">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-control" name="npass" minlength="6" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Confirm password</label>
+          <input type="password" class="form-control" name="cfpass" minlength="6" required>
+        </div>
+      <% } %>
+      <div class="col-12">
+        <label class="form-label">Clinic address</label>
+        <textarea class="form-control" name="clinicaddress" rows="3" required><%= doctor ? doctor.address : '' %></textarea>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-4"><%= doctor ? 'Update Doctor' : 'Add Doctor' %></button>
+  </form>
+</div>
+<%- include('../partials/layout-footer') %>

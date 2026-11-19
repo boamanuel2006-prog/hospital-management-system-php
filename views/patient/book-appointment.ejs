@@ -1,0 +1,101 @@
+<%- include('../partials/layout-header', { title: 'Book Appointment', role: 'patient', active: 'book' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Book Appointment</h1>
+    <div class="text-muted">Choose a doctor, review availability, and submit a pending appointment request.</div>
+  </div>
+  <a class="btn btn-outline-secondary" href="/hms/appointment-history.php"><i class="bi bi-calendar-check me-1"></i>My Appointments</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="hms-card p-3">
+      <form method="post" action="/hms/book-appointment.php" id="bookingForm">
+        <div class="mb-3">
+          <label class="form-label">Doctor Specialization</label>
+          <select class="form-select" name="Doctorspecialization" id="specialization" required>
+            <option value="">Select specialization</option>
+            <% specialties.forEach(function(s) { %>
+              <option value="<%= s.specilization %>"><%= s.specilization %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Doctor</label>
+          <select class="form-select" name="doctor" id="doctor" required>
+            <option value="">Select doctor</option>
+            <% doctors.forEach(function(doctor) { %>
+              <option value="<%= doctor.id %>" data-specialization="<%= doctor.specilization %>" data-fee="<%= doctor.docFees %>" data-availability="<%= doctor.availabilitySummary %>">
+                <%= doctor.doctorName %> (<%= doctor.specilization %>)
+              </option>
+            <% }); %>
+          </select>
+          <div class="form-text" id="availabilityText">Select a doctor to view availability.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Consultancy Fee</label>
+          <input class="form-control" id="fees" value="" readonly>
+        </div>
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label">Appointment Date</label>
+            <input class="form-control" type="date" name="appdate" min="<%= today %>" required>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label">Appointment Time</label>
+            <input class="form-control" type="time" name="apptime" required>
+          </div>
+        </div>
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <a class="btn btn-light" href="/hms/dashboard.php">Cancel</a>
+          <button class="btn btn-primary" type="submit"><i class="bi bi-send me-1"></i>Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="hms-card p-3 h-100">
+      <h2 class="h5">Before Booking</h2>
+      <div class="text-muted mb-3">Availability is checked again when you submit, so another patient cannot take the same slot silently.</div>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="fw-semibold">Pending</div>
+          <div class="small text-muted">New requests start here.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="fw-semibold">Approved</div>
+          <div class="small text-muted">Admin or doctor confirms the visit.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="fw-semibold">Completed</div>
+          <div class="small text-muted">Doctor adds diagnosis and prescription.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% const extraScript = `<script>
+var specialization = document.getElementById("specialization");
+var doctor = document.getElementById("doctor");
+var fee = document.getElementById("fees");
+var availability = document.getElementById("availabilityText");
+var allOptions = Array.from(doctor.querySelectorAll("option")).slice(1);
+
+function filterDoctors() {
+  var selected = specialization.value;
+  doctor.value = "";
+  fee.value = "";
+  availability.textContent = "Select a doctor to view availability.";
+  allOptions.forEach(function(option) {
+    option.hidden = selected && option.dataset.specialization !== selected;
+  });
+}
+function updateDoctorMeta() {
+  var option = doctor.options[doctor.selectedIndex];
+  fee.value = option && option.dataset.fee ? option.dataset.fee : "";
+  availability.textContent = option && option.dataset.availability ? option.dataset.availability : "Select a doctor to view availability.";
+}
+specialization.addEventListener("change", filterDoctors);
+doctor.addEventListener("change", updateDoctorMeta);
+</script>`; %>
+<%- include('../partials/layout-footer', { extraScript }) %>

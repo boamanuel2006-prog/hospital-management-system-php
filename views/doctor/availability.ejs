@@ -1,0 +1,91 @@
+<%- include('../partials/layout-header', { title: 'Doctor Availability', role: 'doctor', active: 'availability' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Availability</h1>
+    <div class="text-muted">Set weekly or date-specific slots that patients can book.</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="hms-card p-3">
+      <h2 class="h5 mb-3">Add Slot</h2>
+      <form method="post" action="/hms/doctor/availability.php">
+        <input type="hidden" name="action" value="create">
+        <div class="mb-3">
+          <label class="form-label">Weekly Day</label>
+          <select class="form-select" name="day_of_week" required>
+            <% days.forEach(function(dayName, index) { %>
+              <option value="<%= index %>"><%= dayName %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Specific Date</label>
+          <input class="form-control" type="date" name="available_date">
+          <div class="form-text">Optional. Use it for one-day overrides.</div>
+        </div>
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label">Start</label>
+            <input class="form-control" type="time" name="start_time" required>
+          </div>
+          <div class="col-6">
+            <label class="form-label">End</label>
+            <input class="form-control" type="time" name="end_time" required>
+          </div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-6">
+            <label class="form-label">Slot Minutes</label>
+            <input class="form-control" type="number" name="slot_duration_minutes" min="5" value="30" required>
+          </div>
+          <div class="col-6">
+            <label class="form-label">Max Bookings</label>
+            <input class="form-control" type="number" name="max_appointments" min="1" value="1" required>
+          </div>
+        </div>
+        <button class="btn btn-primary w-100 mt-4" type="submit">Save Slot</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="hms-card p-3">
+      <h2 class="h5 mb-3">Current Slots</h2>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" data-sortable>
+          <thead>
+          <tr>
+            <th data-sort>Day / Date</th>
+            <th data-sort>Time</th>
+            <th data-sort>Capacity</th>
+            <th data-sort>Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% slots.forEach(function(slot) { %>
+            <tr>
+              <td><%= slot.available_date || days[slot.day_of_week] %></td>
+              <td><%= String(slot.start_time).slice(0, 5) %> - <%= String(slot.end_time).slice(0, 5) %></td>
+              <td><%= slot.slot_duration_minutes %> min / <%= slot.max_appointments %> booking(s)</td>
+              <td><%- Number(slot.is_active) === 1 ? '<span class="badge text-bg-success">Active</span>' : '<span class="badge text-bg-secondary">Inactive</span>' %></td>
+              <td class="text-end">
+                <form method="post" action="/hms/doctor/availability.php" onsubmit="return confirm('Remove this slot?');">
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="id" value="<%= slot.id %>">
+                  <button class="btn btn-sm btn-outline-secondary" type="submit">Remove</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+          <% if (!slots.length) { %>
+            <tr><td colspan="5" class="text-center text-muted py-4">No availability slots found.</td></tr>
+          <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

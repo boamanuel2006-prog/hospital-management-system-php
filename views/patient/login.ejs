@@ -1,0 +1,27 @@
+<%- include('../partials/auth-header', { title: 'Patient Login', heading: 'Patient Login', subtitle: 'Sign in to book appointments, check status, and download prescriptions.' }) %>
+<form method="post" action="/hms/user-login.php" class="mt-3">
+  <div class="mb-3">
+    <label class="form-label" for="username">Email address</label>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+      <input type="email" class="form-control" id="username" name="username" placeholder="johndoe12@test.com" required>
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label" for="password">Password</label>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-lock"></i></span>
+      <input type="password" class="form-control" id="password" name="password" placeholder="Test@123" required>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary w-100">
+    <i class="bi bi-box-arrow-in-right me-1"></i>Log In
+  </button>
+  <div class="text-center small mt-3 text-muted">
+    Don't have an account? <a href="/hms/registration.php">Create an account</a>
+  </div>
+  <div class="text-center auth-muted small mt-2">
+    <a href="/">Back to website</a>
+  </div>
+</form>
+<%- include('../partials/auth-footer') %>

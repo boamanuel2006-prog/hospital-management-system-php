@@ -1,0 +1,59 @@
+<%- include('../partials/layout-header', { title: 'Between Dates Report', role: 'admin', active: 'reports' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Between Dates Report</h1>
+    <p class="text-muted mb-0">Generate a patient registration report for a selected date range.</p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="hms-card p-4">
+      <form method="post" action="/hms/admin/betweendates-detailsreports.php" class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="fromdate">From date</label>
+          <input type="date" class="form-control" id="fromdate" name="fromdate" value="<%= fromdate %>" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="todate">To date</label>
+          <input type="date" class="form-control" id="todate" name="todate" value="<%= todate %>" required>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-file-earmark-text me-1"></i>Generate Report
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <% if (results !== null) { %>
+    <div class="col-lg-7">
+      <div class="hms-card p-4">
+        <h2 class="h5 mb-3">Report Results (<%= fromdate %> to <%= todate %>)</h2>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr><th>#</th><th>Patient</th><th>Contact</th><th>Gender</th><th>Created</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <% results.forEach(function(p, idx) { %>
+                <tr>
+                  <td><%= idx + 1 %></td>
+                  <td class="fw-semibold"><%= p.PatientName %></td>
+                  <td><%= p.PatientContno %></td>
+                  <td><%= p.PatientGender %></td>
+                  <td><%= p.CreationDate %></td>
+                  <td><a class="btn btn-sm btn-outline-primary" href="/hms/admin/view-patient.php?viewid=<%= p.ID %>">View</a></td>
+                </tr>
+              <% }); %>
+              <% if (!results.length) { %>
+                <tr><td colspan="6" class="text-center text-muted py-3">No records found in this date range.</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+<%- include('../partials/layout-footer') %>

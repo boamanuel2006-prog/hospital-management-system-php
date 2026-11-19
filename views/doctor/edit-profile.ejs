@@ -1,0 +1,43 @@
+<%- include('../partials/layout-header', { title: 'Edit Doctor Profile', role: 'doctor', active: 'profile' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>My Profile</h1>
+    <div class="text-muted">Update your specialization, clinic address, and consultancy fees.</div>
+  </div>
+</div>
+<div class="hms-card p-4" style="max-width:720px">
+  <form method="post" action="/hms/doctor/edit-profile.php">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Specialization</label>
+        <select class="form-select" name="Doctorspecialization" required>
+          <% specializations.forEach(function(s) { %>
+            <option value="<%= s.specilization %>" <%= doctor.specilization === s.specilization ? 'selected' : '' %>><%= s.specilization %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Doctor Name</label>
+        <input class="form-control" name="docname" value="<%= doctor.doctorName %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Consultancy Fees</label>
+        <input type="number" class="form-control" name="docfees" value="<%= doctor.docFees %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Contact Number</label>
+        <input class="form-control" name="doccontact" value="<%= doctor.contactno %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input class="form-control" value="<%= doctor.docEmail %>" readonly>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Clinic Address</label>
+        <textarea class="form-control" name="clinicaddress" rows="3" required><%= doctor.address %></textarea>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-3" type="submit">Update Profile</button>
+  </form>
+</div>
+<%- include('../partials/layout-footer') %>

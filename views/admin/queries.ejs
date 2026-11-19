@@ -1,0 +1,46 @@
+<%- include('../partials/layout-header', { title: heading, role: 'admin', active: 'queries' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1><%= heading %></h1>
+    <div class="text-muted">Public contact inquiries submitted from the website.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary btn-sm" href="/hms/admin/unread-queries.php">Unread</a>
+    <a class="btn btn-outline-secondary btn-sm" href="/hms/admin/read-query.php">Read</a>
+  </div>
+</div>
+
+<div class="hms-card p-3">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" data-sortable>
+      <thead>
+      <tr>
+        <th data-sort>#</th>
+        <th data-sort>Name</th>
+        <th data-sort>Email</th>
+        <th data-sort>Contact</th>
+        <th data-sort>Date</th>
+        <th class="text-end">Action</th>
+      </tr>
+      </thead>
+      <tbody>
+      <% queries.forEach(function(q, idx) { %>
+        <tr>
+          <td><%= idx + 1 %></td>
+          <td class="fw-semibold"><%= q.fullname %></td>
+          <td><%= q.email %></td>
+          <td><%= q.contactno %></td>
+          <td><%= q.PostingDate %></td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary" href="/hms/admin/query-details.php?id=<%= q.id %>">View</a>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!queries.length) { %>
+        <tr><td colspan="6" class="text-center text-muted py-4">No queries found.</td></tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

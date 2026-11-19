@@ -1,0 +1,55 @@
+<%- include('../partials/layout-header', { title: 'Doctor Specializations', role: 'admin', active: 'specializations' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Doctor Specializations</h1>
+    <div class="text-muted">Manage clinical departments and specialties.</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="hms-card p-3">
+      <h2 class="h5 mb-3">Add Specialization</h2>
+      <form method="post" action="/hms/admin/doctor-specilization.php">
+        <div class="mb-3">
+          <label class="form-label">Specialization Name</label>
+          <input class="form-control" name="doctorspecilization" required>
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Add Specialization</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="hms-card p-3">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" data-sortable>
+          <thead>
+          <tr>
+            <th data-sort>#</th>
+            <th data-sort>Specialization</th>
+            <th data-sort>Created</th>
+            <th class="text-end">Action</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% specializations.forEach(function(s, i) { %>
+            <tr>
+              <td><%= i + 1 %></td>
+              <td class="fw-semibold"><%= s.specilization %></td>
+              <td><%= s.creationDate %></td>
+              <td class="text-end">
+                <form method="post" action="/hms/admin/doctor-specilization.php" class="d-inline" onsubmit="return confirm('Delete this specialization?');">
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="id" value="<%= s.id %>">
+                  <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

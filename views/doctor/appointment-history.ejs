@@ -1,0 +1,80 @@
+<%- include('../partials/layout-header', { title: 'Doctor Appointments', role: 'doctor', active: 'appointments' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Appointments</h1>
+    <div class="text-muted">Review visits, approve pending requests, complete visits, and open prescriptions.</div>
+  </div>
+  <a class="btn btn-primary" href="/hms/doctor/prescriptions.php"><i class="bi bi-file-medical me-1"></i>Prescription</a>
+</div>
+
+<div class="hms-card p-3 mb-3">
+  <form class="row g-3 align-items-end" method="get" action="/hms/doctor/appointment-history.php">
+    <div class="col-md-4">
+      <label class="form-label">Search</label>
+      <input class="form-control" name="q" value="<%= q %>" placeholder="Patient, email, specialization">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Status</label>
+      <select class="form-select" name="status">
+        <option value="">All</option>
+        <% ['Pending', 'Approved', 'Completed', 'Cancelled'].forEach(function(option) { %>
+          <option value="<%= option %>" <%= status === option ? 'selected' : '' %>><%= option %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Date</label>
+      <input class="form-control" type="date" name="date" value="<%= date %>">
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Filter</button>
+    </div>
+  </form>
+</div>
+
+<div class="hms-card p-3">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" data-sortable>
+      <thead>
+      <tr>
+        <th data-sort>#</th>
+        <th data-sort>Patient</th>
+        <th data-sort>Date / Time</th>
+        <th data-sort>Status</th>
+        <th class="text-end">Manage</th>
+      </tr>
+      </thead>
+      <tbody>
+      <% appointments.forEach(function(appointment) { %>
+        <tr>
+          <td><%= appointment.id %></td>
+          <td>
+            <div class="fw-semibold"><%= appointment.fullName %></div>
+            <div class="small text-muted"><%= appointment.email %></div>
+          </td>
+          <td><%= appointment.appointmentDate %> <%= appointment.appointmentTime %></td>
+          <td><%- statusBadge(appointment.status) %></td>
+          <td class="text-end">
+            <div class="d-inline-flex flex-wrap gap-2 justify-content-end">
+              <a class="btn btn-sm btn-outline-success" href="/hms/doctor/prescriptions.php?appointment_id=<%= appointment.id %>">Record</a>
+              <form method="post" action="/hms/doctor/appointment-history.php" class="d-inline-flex gap-2 align-items-center">
+                <input type="hidden" name="appointment_id" value="<%= appointment.id %>">
+                <select class="form-select form-select-sm" name="status">
+                  <% ['Pending', 'Approved', 'Completed', 'Cancelled'].forEach(function(option) { %>
+                    <option value="<%= option %>" <%= appointment.status === option ? 'selected' : '' %>><%= option %></option>
+                  <% }); %>
+                </select>
+                <button class="btn btn-sm btn-primary" type="submit">Save</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!appointments.length) { %>
+        <tr><td colspan="5" class="text-center text-muted py-4">No appointments found.</td></tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

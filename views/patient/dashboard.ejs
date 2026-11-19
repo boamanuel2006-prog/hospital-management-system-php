@@ -1,0 +1,103 @@
+<%- include('../partials/layout-header', { title: 'Patient Dashboard', role: 'patient', active: 'dashboard' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>Patient Dashboard</h1>
+    <div class="text-muted">Track appointments, prescriptions, and medical history.</div>
+  </div>
+  <a class="btn btn-primary" href="/hms/book-appointment.php"><i class="bi bi-calendar-plus me-1"></i>Book Appointment</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-12 col-sm-6 col-xl-3">
+    <a class="hms-card hms-stat d-block text-reset" href="/hms/appointment-history.php">
+      <span class="icon"><i class="bi bi-calendar-check"></i></span>
+      <div class="value"><%= stats.appointments %></div>
+      <div class="label">Total Appointments</div>
+    </a>
+  </div>
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="hms-card hms-stat">
+      <span class="icon"><i class="bi bi-hourglass-split"></i></span>
+      <div class="value"><%= stats.pending %></div>
+      <div class="label">Pending</div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="hms-card hms-stat">
+      <span class="icon"><i class="bi bi-check2-circle"></i></span>
+      <div class="value"><%= stats.completed %></div>
+      <div class="label">Completed</div>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6 col-xl-3">
+    <a class="hms-card hms-stat d-block text-reset" href="/hms/manage-medhistory.php">
+      <span class="icon"><i class="bi bi-journal-medical"></i></span>
+      <div class="value"><%= stats.history %></div>
+      <div class="label">Medical Records</div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="hms-card p-3 h-100">
+      <h2 class="h5 mb-3">Next Appointment</h2>
+      <% if (nextAppointment) { %>
+        <div class="d-flex align-items-start gap-3">
+          <div class="hms-stat p-0" style="min-height:auto">
+            <span class="icon"><i class="bi bi-calendar-event"></i></span>
+          </div>
+          <div>
+            <div class="fw-semibold"><%= nextAppointment.doctorName %></div>
+            <div class="text-muted"><%= nextAppointment.doctorSpecialization %></div>
+            <div class="mt-2"><%= nextAppointment.appointmentDate %> at <%= nextAppointment.appointmentTime %></div>
+            <div class="mt-2"><%- statusBadge(nextAppointment.status) %></div>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="text-muted">No upcoming appointment. You can book one when you are ready.</div>
+      <% } %>
+      <div class="mt-4 d-grid gap-2">
+        <a class="btn btn-outline-primary" href="/hms/appointment-history.php">Track Status</a>
+        <a class="btn btn-outline-secondary" href="/hms/manage-medhistory.php">Medical History Timeline</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="hms-card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Recent Appointments</h2>
+        <span class="badge text-bg-light"><%= stats.prescriptions %> prescriptions</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" data-sortable>
+          <thead>
+          <tr>
+            <th data-sort>Doctor</th>
+            <th data-sort>Date</th>
+            <th data-sort>Status</th>
+            <th class="text-end">Fee</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% recentAppointments.forEach(function(appointment) { %>
+            <tr>
+              <td>
+                <div class="fw-semibold"><%= appointment.doctorName %></div>
+                <div class="small text-muted"><%= appointment.doctorSpecialization %></div>
+              </td>
+              <td><%= appointment.appointmentDate %> <%= appointment.appointmentTime %></td>
+              <td><%- statusBadge(appointment.status) %></td>
+              <td class="text-end"><%= appointment.consultancyFees %></td>
+            </tr>
+          <% }); %>
+          <% if (!recentAppointments.length) { %>
+            <tr><td colspan="4" class="text-center text-muted py-4">No appointments found.</td></tr>
+          <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

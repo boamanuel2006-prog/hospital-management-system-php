@@ -1,0 +1,38 @@
+<%- include('../partials/layout-header', { title: 'My Profile', role: 'patient', active: 'profile' }) %>
+<div class="hms-page-title">
+  <div>
+    <h1>My Profile</h1>
+    <div class="text-muted">Update your contact and demographic details.</div>
+  </div>
+</div>
+<div class="hms-card p-4" style="max-width:720px">
+  <form method="post" action="/hms/edit-profile.php">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Full Name</label>
+        <input class="form-control" name="fname" value="<%= user.fullName %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input class="form-control" value="<%= user.email %>" readonly>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">City</label>
+        <input class="form-control" name="city" value="<%= user.city %>" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Gender</label>
+        <select class="form-select" name="gender">
+          <option value="male" <%= user.gender === 'male' ? 'selected' : '' %>>Male</option>
+          <option value="female" <%= user.gender === 'female' ? 'selected' : '' %>>Female</option>
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Address</label>
+        <textarea class="form-control" name="address" rows="3" required><%= user.address %></textarea>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-3" type="submit">Update Profile</button>
+  </form>
+</div>
+<%- include('../partials/layout-footer') %>
