@@ -18,6 +18,7 @@ import {
   setAppointmentStatus
 } from './src/store.js';
 import { passwordMatches, hashPassword, flash, consumeFlashes, requireRole, statusBadge } from './src/auth.js';
+import { getTranslator } from './src/i18n.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,13 +41,32 @@ app.use(
   })
 );
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/src/assets/images', express.static(path.join(__dirname, 'src/assets/images')));
 
 app.use((req, res, next) => {
+  const queryLang = req.query.lang === 'pt' || req.query.lang === 'en' ? req.query.lang : null;
+  if (queryLang && req.session) req.session.lang = queryLang;
+  let lang = req.session?.lang;
+  if (lang !== 'pt' && lang !== 'en') {
+    const accept = String(req.headers['accept-language'] || '').toLowerCase();
+    lang = accept.startsWith('en') ? 'en' : 'pt';
+  }
+  res.locals.lang = lang;
+  res.locals.t = getTranslator(lang);
+  res.locals.currentUrl = req.originalUrl || '/';
   res.locals.flashes = consumeFlashes(req);
   res.locals.currentUserName = req.session?.userName || '';
-  res.locals.statusBadge = statusBadge;
+  res.locals.statusBadge = (status) => statusBadge(status, lang);
   res.locals.today = todayStr();
   next();
+});
+
+app.get('/lang/:code', (req, res) => {
+  const code = req.params.code === 'en' ? 'en' : 'pt';
+  if (req.session) req.session.lang = code;
+  const nextUrl = String(req.query.next || '/');
+  const safeNext = nextUrl.startsWith('/') && !nextUrl.startsWith('//') ? nextUrl : '/';
+  res.redirect(safeNext);
 });
 
 // Helper joins
@@ -72,7 +92,10 @@ app.get(['/', '/index.php', '/hospital', '/hospital/index.php'], (req, res) => {
     specializations: db.specializations,
     aboutPage,
     contactPage,
-    contactSubmitted: req.query.contact === 'ok'
+    contactSubmitted: req.query.contact === 'ok',
+    availableBeds: db.beds.filter((b) => b.status === 'Available').length,
+    totalBeds: db.beds.length,
+    totalDoctors: db.doctors.length
   });
 });
 
@@ -103,13 +126,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', runtime: 'node', storage: 'in-memory' });
 });
 
-// ---------- Patient Portal ----------
-app.get(['/hms', '/hms/', '/hms/user-login.php', '/hms/login'], (req, res) => {
-  if (req.session?.role === 'patient') return res.redirect('/hms/dashboard.php');
-  res.render('patient/login');
-});
+function renderUnifiedAuth(req, res, defaultMode = 'login', defaultRole = 'patient') {
+  const mode = req.query.mode === 'register' ? 'register' : defaultMode;
+  const qRole = ['patient', 'doctor', 'admin'].includes(req.query.role) ? req.query.role : defaultRole;
+  res.render('auth/portal-auth', {
+    initialMode: mode,
+    initialRole: qRole,
+    specializations: db.specializations
+  });
+}
 
-app.post('/hms/user-login.php', (req, res) => {
+function performPatientLogin(req, res, failRedirect = '/hms/auth.php?role=patient') {
   const email = String(req.body.username || '').trim();
   const password = String(req.body.password || '');
   const user = db.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
@@ -143,15 +170,196 @@ app.post('/hms/user-login.php', (req, res) => {
     logout: null,
     status: 0
   });
-  flash(req, 'danger', 'Invalid email or password.');
-  res.redirect('/hms/user-login.php');
+  flash(req, 'danger', res.locals.lang === 'pt' ? 'E-mail ou senha inválidos.' : 'Invalid email or password.');
+  return res.redirect(failRedirect);
+}
+
+function performDoctorLogin(req, res, failRedirect = '/hms/auth.php?role=doctor') {
+  const email = String(req.body.username || '').trim();
+  const password = String(req.body.password || '');
+  const doctor = db.doctors.find((d) => d.docEmail.toLowerCase() === email.toLowerCase());
+  const ip = req.ip || '127.0.0.1';
+
+  if (doctor && passwordMatches(password, doctor.password)) {
+    if (!String(doctor.password).startsWith('$2')) {
+      doctor.password = hashPassword(password);
+    }
+    req.session.userId = doctor.id;
+    req.session.role = 'doctor';
+    req.session.userName = doctor.doctorName;
+    db.doctorLogs.unshift({
+      id: nextId('doctorLogs'),
+      uid: doctor.id,
+      username: email,
+      userip: ip,
+      loginTime: nowStr(),
+      logout: null,
+      status: 1
+    });
+    return res.redirect('/hms/doctor/dashboard.php');
+  }
+  db.doctorLogs.unshift({
+    id: nextId('doctorLogs'),
+    uid: null,
+    username: email,
+    userip: ip,
+    loginTime: nowStr(),
+    logout: null,
+    status: 0
+  });
+  flash(req, 'danger', res.locals.lang === 'pt' ? 'E-mail ou senha inválidos.' : 'Invalid email or password.');
+  return res.redirect(failRedirect);
+}
+
+function performAdminLogin(req, res, failRedirect = '/hms/auth.php?role=admin') {
+  const username = String(req.body.username || '').trim();
+  const password = String(req.body.password || '');
+  const admin = db.admins.find((a) => a.username === username);
+  if (admin && passwordMatches(password, admin.password)) {
+    if (!String(admin.password).startsWith('$2')) {
+      admin.password = hashPassword(password);
+    }
+    req.session.userId = admin.id;
+    req.session.role = 'admin';
+    req.session.userName = admin.username;
+    logAudit('admin', admin.id, 'admin_login', 'admin', admin.id, 'Admin logged in.', req.ip);
+    return res.redirect('/hms/admin/dashboard.php');
+  }
+  flash(req, 'danger', res.locals.lang === 'pt' ? 'Usuário ou senha inválidos.' : 'Invalid username or password.');
+  return res.redirect(failRedirect);
+}
+
+// ---------- Unified Multi-Step Auth ----------
+app.get('/hms/auth.php', (req, res) => {
+  if (req.session?.role === 'patient' && !req.query.role && !req.query.mode) return res.redirect('/hms/dashboard.php');
+  if (req.session?.role === 'doctor' && !req.query.role && !req.query.mode) return res.redirect('/hms/doctor/dashboard.php');
+  if (req.session?.role === 'admin' && !req.query.role && !req.query.mode) return res.redirect('/hms/admin/dashboard.php');
+  renderUnifiedAuth(req, res, 'login', 'patient');
 });
 
+app.post('/hms/auth/login', (req, res) => {
+  const role = String(req.body.role || 'patient');
+  if (role === 'doctor') return performDoctorLogin(req, res, '/hms/auth.php?mode=login&role=doctor');
+  if (role === 'admin') return performAdminLogin(req, res, '/hms/auth.php?mode=login&role=admin');
+  return performPatientLogin(req, res, '/hms/auth.php?mode=login&role=patient');
+});
+
+app.post('/hms/auth/register', (req, res) => {
+  const role = ['patient', 'doctor', 'admin'].includes(req.body.role) ? req.body.role : 'patient';
+  const password = String(req.body.password || '');
+  const confirm = String(req.body.password_again || '');
+  const pt = res.locals.lang === 'pt';
+
+  if (password.length < 6 || password !== confirm) {
+    flash(req, 'danger', pt ? 'As senhas devem coincidir e ter ao menos 6 caracteres.' : 'Passwords must match and be at least 6 characters.');
+    return res.redirect(`/hms/auth.php?mode=register&role=${role}`);
+  }
+
+  if (role === 'doctor') {
+    const doctorName = String(req.body.full_name || '').trim();
+    const docEmail = String(req.body.email || '').trim();
+    const specilization = String(req.body.specialization || '').trim();
+    const contactno = String(req.body.doccontact || '').trim();
+    const docFees = String(req.body.docfees || '500').trim();
+    const address = String(req.body.clinicaddress || '').trim();
+    if (!doctorName || !docEmail || !specilization) {
+      flash(req, 'danger', pt ? 'Preencha todos os dados obrigatórios do médico.' : 'Please complete all required physician fields.');
+      return res.redirect('/hms/auth.php?mode=register&role=doctor');
+    }
+    if (db.doctors.some((d) => d.docEmail.toLowerCase() === docEmail.toLowerCase())) {
+      flash(req, 'danger', pt ? 'Este e-mail médico já está cadastrado.' : 'This doctor email is already registered.');
+      return res.redirect('/hms/auth.php?mode=register&role=doctor');
+    }
+    const id = nextId('doctors');
+    db.doctors.push({
+      id,
+      specilization,
+      doctorName,
+      address,
+      docFees,
+      contactno,
+      docEmail,
+      password: hashPassword(password),
+      creationDate: nowStr(),
+      updationDate: null
+    });
+    logAudit('doctor', id, 'doctor_registered', 'doctors', id, `Self-registered Dr. ${doctorName}`, req.ip);
+    flash(req, 'success', pt ? 'Cadastro médico realizado! Faça login para continuar.' : 'Physician account created! You can now log in.');
+    return res.redirect('/hms/auth.php?mode=login&role=doctor');
+  }
+
+  if (role === 'admin') {
+    const fullName = String(req.body.full_name || '').trim();
+    const username = String(req.body.username || '').trim();
+    const department = String(req.body.department || '').trim();
+    if (!username || !fullName) {
+      flash(req, 'danger', pt ? 'Informe nome completo e nome de usuário.' : 'Please enter full name and username.');
+      return res.redirect('/hms/auth.php?mode=register&role=admin');
+    }
+    if (db.admins.some((a) => a.username.toLowerCase() === username.toLowerCase())) {
+      flash(req, 'danger', pt ? 'Este usuário administrativo já existe.' : 'This admin username already exists.');
+      return res.redirect('/hms/auth.php?mode=register&role=admin');
+    }
+    const id = nextId('admins');
+    db.admins.push({
+      id,
+      username,
+      fullName,
+      department,
+      password: hashPassword(password),
+      updationDate: nowStr()
+    });
+    logAudit('admin', id, 'admin_registered', 'admin', id, `Registered admin ${username} (${department})`, req.ip);
+    flash(req, 'success', pt ? 'Conta administrativa criada! Faça login para continuar.' : 'Admin account created! You can now log in.');
+    return res.redirect('/hms/auth.php?mode=login&role=admin');
+  }
+
+  // Default: Patient registration
+  const fullName = String(req.body.full_name || '').trim();
+  const address = String(req.body.address || '').trim();
+  const city = String(req.body.city || '').trim();
+  const gender = String(req.body.gender || 'male').trim();
+  const email = String(req.body.email || '').trim();
+
+  if (!fullName || !email) {
+    flash(req, 'danger', pt ? 'Preencha todos os campos obrigatórios.' : 'Please complete all required fields.');
+    return res.redirect('/hms/auth.php?mode=register&role=patient');
+  }
+  if (db.users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
+    flash(req, 'danger', pt ? 'Este e-mail já está cadastrado.' : 'This email is already registered.');
+    return res.redirect('/hms/auth.php?mode=register&role=patient');
+  }
+  const id = nextId('users');
+  db.users.push({
+    id,
+    fullName,
+    address,
+    city,
+    gender,
+    email,
+    password: hashPassword(password),
+    regDate: nowStr(),
+    updationDate: null
+  });
+  logAudit('patient', id, 'patient_registered', 'users', id, `Registered ${fullName}`, req.ip);
+  flash(req, 'success', pt ? 'Conta criada! Você já pode entrar.' : 'Account created! You can now log in.');
+  return res.redirect('/hms/auth.php?mode=login&role=patient');
+});
+
+// ---------- Patient Portal ----------
+app.get(['/hms', '/hms/', '/hms/user-login.php', '/hms/login'], (req, res) => {
+  if (req.session?.role === 'patient') return res.redirect('/hms/dashboard.php');
+  renderUnifiedAuth(req, res, 'login', 'patient');
+});
+
+app.post('/hms/user-login.php', (req, res) => performPatientLogin(req, res, '/hms/user-login.php'));
+
 app.get('/hms/registration.php', (req, res) => {
-  res.render('patient/register');
+  renderUnifiedAuth(req, res, 'register', 'patient');
 });
 
 app.post('/hms/registration.php', (req, res) => {
+  req.body.role = 'patient';
   const fullName = String(req.body.full_name || '').trim();
   const address = String(req.body.address || '').trim();
   const city = String(req.body.city || '').trim();
@@ -191,6 +399,8 @@ app.get('/hms/dashboard.php', requireRole('patient', '/hms/user-login.php'), (re
     (p) => String(p.PatientEmail || '').toLowerCase() === String(req.session.userEmail || '').toLowerCase()
   );
   const myRx = db.prescriptions.filter((p) => Number(p.patient_user_id) === Number(userId));
+  const myLabs = db.labOrders.filter((l) => Number(l.patientUserId) === Number(userId));
+  const myInvoices = db.invoices.filter((i) => Number(i.patientUserId) === Number(userId));
   const nextAppointment =
     mine
       .filter((a) => a.appointmentDate >= todayStr() && a.status !== 'Cancelled')
@@ -202,7 +412,9 @@ app.get('/hms/dashboard.php', requireRole('patient', '/hms/user-login.php'), (re
       pending: mine.filter((a) => a.status === 'Pending').length,
       completed: mine.filter((a) => a.status === 'Completed').length,
       history: myPatients.length,
-      prescriptions: myRx.length
+      prescriptions: myRx.length,
+      labs: myLabs.length,
+      unpaidInvoices: myInvoices.filter((i) => i.status === 'Unpaid').length
     },
     nextAppointment,
     recentAppointments: mine.slice().sort((a, b) => b.id - a.id).slice(0, 5)
@@ -384,6 +596,40 @@ app.post('/hms/change-password.php', requireRole('patient', '/hms/user-login.php
   res.redirect('/hms/change-password.php');
 });
 
+app.get('/hms/lab-results.php', requireRole('patient', '/hms/user-login.php'), (req, res) => {
+  const userId = req.session.userId;
+  const orders = db.labOrders
+    .filter((l) => Number(l.patientUserId) === Number(userId))
+    .map((l) => {
+      const doc = db.doctors.find((d) => Number(d.id) === Number(l.doctorId));
+      return { ...l, doctorName: doc ? doc.doctorName : 'Doctor' };
+    })
+    .sort((a, b) => b.id - a.id);
+  res.render('patient/lab-results', { orders });
+});
+
+app.get('/hms/invoices.php', requireRole('patient', '/hms/user-login.php'), (req, res) => {
+  const userId = req.session.userId;
+  const invoices = db.invoices
+    .filter((i) => Number(i.patientUserId) === Number(userId))
+    .sort((a, b) => b.id - a.id);
+  res.render('patient/invoices', { invoices });
+});
+
+app.post('/hms/invoices.php', requireRole('patient', '/hms/user-login.php'), (req, res) => {
+  const userId = req.session.userId;
+  const invoiceId = Number(req.body.invoice_id);
+  const inv = db.invoices.find((i) => Number(i.id) === invoiceId && Number(i.patientUserId) === Number(userId));
+  if (inv && inv.status === 'Unpaid') {
+    inv.status = 'Paid';
+    inv.paidAt = todayStr();
+    inv.method = String(req.body.method || inv.method || 'PIX').trim();
+    logAudit('patient', userId, 'invoice_paid', 'invoice', inv.id, `Paid invoice #${inv.id}`, req.ip);
+    flash(req, 'success', res.locals.lang === 'pt' ? 'Guia marcada como paga.' : 'Invoice marked as paid.');
+  }
+  res.redirect('/hms/invoices.php');
+});
+
 app.get('/hms/logout.php', (req, res) => {
   req.session.destroy(() => res.redirect('/hms/user-login.php'));
 });
@@ -391,45 +637,10 @@ app.get('/hms/logout.php', (req, res) => {
 // ---------- Doctor Portal ----------
 app.get(['/hms/doctor', '/hms/doctor/', '/hms/doctor/index.php'], (req, res) => {
   if (req.session?.role === 'doctor') return res.redirect('/hms/doctor/dashboard.php');
-  res.render('doctor/login');
+  renderUnifiedAuth(req, res, 'login', 'doctor');
 });
 
-app.post('/hms/doctor/index.php', (req, res) => {
-  const email = String(req.body.username || '').trim();
-  const password = String(req.body.password || '');
-  const doctor = db.doctors.find((d) => d.docEmail.toLowerCase() === email.toLowerCase());
-  const ip = req.ip || '127.0.0.1';
-
-  if (doctor && passwordMatches(password, doctor.password)) {
-    if (!String(doctor.password).startsWith('$2')) {
-      doctor.password = hashPassword(password);
-    }
-    req.session.userId = doctor.id;
-    req.session.role = 'doctor';
-    req.session.userName = doctor.doctorName;
-    db.doctorLogs.unshift({
-      id: nextId('doctorLogs'),
-      uid: doctor.id,
-      username: email,
-      userip: ip,
-      loginTime: nowStr(),
-      logout: null,
-      status: 1
-    });
-    return res.redirect('/hms/doctor/dashboard.php');
-  }
-  db.doctorLogs.unshift({
-    id: nextId('doctorLogs'),
-    uid: null,
-    username: email,
-    userip: ip,
-    loginTime: nowStr(),
-    logout: null,
-    status: 0
-  });
-  flash(req, 'danger', 'Invalid email or password.');
-  res.redirect('/hms/doctor/index.php');
-});
+app.post('/hms/doctor/index.php', (req, res) => performDoctorLogin(req, res, '/hms/doctor/index.php'));
 
 app.get('/hms/doctor/dashboard.php', requireRole('doctor', '/hms/doctor/index.php'), (req, res) => {
   const doctorId = req.session.userId;
@@ -447,7 +658,10 @@ app.get('/hms/doctor/dashboard.php', requireRole('doctor', '/hms/doctor/index.ph
       today: mine.filter((a) => a.appointmentDate === todayStr()).length,
       pending: mine.filter((a) => a.status === 'Pending').length,
       completed: mine.filter((a) => a.status === 'Completed').length,
-      patients: myPatients.length
+      patients: myPatients.length,
+      triageWaiting: db.triageQueue.filter((t) => t.status === 'Waiting').length,
+      availableBeds: db.beds.filter((b) => b.status === 'Available').length,
+      pendingLabs: db.labOrders.filter((l) => Number(l.doctorId) === Number(doctorId) && l.status !== 'Completed').length
     },
     appointments: mine.slice().sort((a, b) => b.id - a.id),
     followups
@@ -737,6 +951,214 @@ app.post('/hms/doctor/change-password.php', requireRole('doctor', '/hms/doctor/i
   res.redirect('/hms/doctor/change-password.php');
 });
 
+// Doctor hospital operation routes (triage, beds, lab-orders)
+function handleTriageGet(role, actionUrl) {
+  return (req, res) => {
+    const priorityFilter = String(req.query.priority || '').trim();
+    const statusFilter = String(req.query.status || '').trim();
+    const priorityRank = { Emergency: 0, 'Very Urgent': 1, Urgent: 2, Standard: 3 };
+    let queue = db.triageQueue.map((item) => {
+      const doc = db.doctors.find((d) => Number(d.id) === Number(item.doctorId));
+      return { ...item, doctorName: doc ? doc.doctorName : '-' };
+    });
+    if (priorityFilter) queue = queue.filter((q) => q.priority === priorityFilter);
+    if (statusFilter) queue = queue.filter((q) => q.status === statusFilter);
+    queue.sort((a, b) => (priorityRank[a.priority] ?? 9) - (priorityRank[b.priority] ?? 9) || b.id - a.id);
+    res.render('shared/triage', {
+      role,
+      actionUrl,
+      queue,
+      doctors: db.doctors,
+      priorityFilter,
+      statusFilter
+    });
+  };
+}
+
+function handleTriagePost(role, redirectTo) {
+  return (req, res) => {
+    const action = String(req.body.action || 'create');
+    if (action === 'update_status') {
+      const id = Number(req.body.id);
+      const status = String(req.body.status || '');
+      const entry = db.triageQueue.find((t) => Number(t.id) === id);
+      if (entry && ['Waiting', 'In Consultation', 'Admitted', 'Discharged'].includes(status)) {
+        entry.status = status;
+        logAudit(role, req.session.userId, 'triage_status_updated', 'triage', id, `Triage #${id} -> ${status}`, req.ip);
+        flash(req, 'success', res.locals.lang === 'pt' ? 'Status de triagem atualizado.' : 'Triage status updated.');
+      }
+      return res.redirect(redirectTo);
+    }
+    const patientName = String(req.body.patientName || '').trim();
+    const age = Number(req.body.age || 0);
+    const priority = String(req.body.priority || 'Urgent').trim();
+    const vitals = String(req.body.vitals || '').trim();
+    const complaint = String(req.body.complaint || '').trim();
+    const doctorId = Number(req.body.doctorId || 0) || null;
+    if (patientName && complaint) {
+      const id = nextId('triageQueue');
+      db.triageQueue.unshift({
+        id,
+        patientName,
+        age,
+        priority,
+        vitals,
+        complaint,
+        doctorId,
+        status: 'Waiting',
+        arrivedAt: nowStr().slice(0, 16)
+      });
+      logAudit(role, req.session.userId, 'triage_created', 'triage', id, `${patientName} (${priority})`, req.ip);
+      if (doctorId) notify('doctor', doctorId, 'Emergency triage intake', `${patientName} assigned (${priority}).`);
+      flash(req, 'success', res.locals.lang === 'pt' ? 'Paciente registrado na triagem.' : 'Patient added to triage queue.');
+    }
+    res.redirect(redirectTo);
+  };
+}
+
+function handleBedsGet(role, actionUrl) {
+  return (req, res) => {
+    const wardFilter = String(req.query.ward || '').trim();
+    const wards = Array.from(new Set(db.beds.map((b) => b.ward)));
+    let beds = db.beds.map((b) => {
+      const doc = db.doctors.find((d) => Number(d.id) === Number(b.doctorId));
+      return { ...b, doctorName: doc ? doc.doctorName : '-' };
+    });
+    if (wardFilter) beds = beds.filter((b) => b.ward === wardFilter);
+    res.render('shared/beds', {
+      role,
+      actionUrl,
+      beds,
+      wards,
+      wardFilter,
+      doctors: db.doctors,
+      summary: {
+        total: db.beds.length,
+        available: db.beds.filter((b) => b.status === 'Available').length,
+        occupied: db.beds.filter((b) => b.status === 'Occupied').length,
+        maintenance: db.beds.filter((b) => b.status === 'Maintenance').length
+      }
+    });
+  };
+}
+
+function handleBedsPost(role, redirectTo) {
+  return (req, res) => {
+    const id = Number(req.body.id);
+    const action = String(req.body.action || '');
+    const bed = db.beds.find((b) => Number(b.id) === id);
+    if (!bed) return res.redirect(redirectTo);
+
+    if (action === 'admit') {
+      const patientName = String(req.body.patientName || '').trim();
+      const doctorId = Number(req.body.doctorId || 0) || null;
+      const notes = String(req.body.notes || '').trim();
+      if (patientName) {
+        bed.status = 'Occupied';
+        bed.patientName = patientName;
+        bed.doctorId = doctorId;
+        bed.admittedAt = nowStr().slice(0, 16);
+        bed.notes = notes;
+        logAudit(role, req.session.userId, 'bed_admitted', 'bed', bed.id, `${bed.code}: ${patientName}`, req.ip);
+        flash(req, 'success', res.locals.lang === 'pt' ? `Paciente internado no leito ${bed.code}.` : `Patient admitted to bed ${bed.code}.`);
+      }
+    } else if (action === 'discharge') {
+      logAudit(role, req.session.userId, 'bed_discharged', 'bed', bed.id, `${bed.code}: ${bed.patientName}`, req.ip);
+      bed.status = 'Available';
+      bed.patientName = '';
+      bed.doctorId = null;
+      bed.admittedAt = null;
+      bed.notes = '';
+      flash(req, 'success', res.locals.lang === 'pt' ? `Leito ${bed.code} liberado.` : `Bed ${bed.code} discharged and available.`);
+    } else if (action === 'maintenance') {
+      if (bed.status === 'Maintenance') {
+        bed.status = 'Available';
+        bed.notes = '';
+      } else if (bed.status === 'Available') {
+        bed.status = 'Maintenance';
+        bed.notes = String(req.body.notes || 'Sanitization / Maintenance').trim();
+      }
+      logAudit(role, req.session.userId, 'bed_status_changed', 'bed', bed.id, `${bed.code} -> ${bed.status}`, req.ip);
+      flash(req, 'success', res.locals.lang === 'pt' ? 'Status do leito atualizado.' : 'Bed status updated.');
+    }
+    res.redirect(redirectTo);
+  };
+}
+
+function handleLabOrdersGet(role, actionUrl) {
+  return (req, res) => {
+    const statusFilter = String(req.query.status || '').trim();
+    let orders = db.labOrders.map((o) => {
+      const doc = db.doctors.find((d) => Number(d.id) === Number(o.doctorId));
+      return { ...o, doctorName: doc ? doc.doctorName : 'Doctor' };
+    });
+    if (role === 'doctor') {
+      orders = orders.filter((o) => Number(o.doctorId) === Number(req.session.userId));
+    }
+    if (statusFilter) orders = orders.filter((o) => o.status === statusFilter);
+    orders.sort((a, b) => b.id - a.id);
+    res.render('shared/lab-orders', {
+      role,
+      actionUrl,
+      orders,
+      users: db.users,
+      doctors: db.doctors,
+      statusFilter
+    });
+  };
+}
+
+function handleLabOrdersPost(role, redirectTo) {
+  return (req, res) => {
+    const action = String(req.body.action || 'create');
+    if (action === 'complete') {
+      const id = Number(req.body.id);
+      const order = db.labOrders.find((o) => Number(o.id) === id);
+      const resultSummary = String(req.body.resultSummary || '').trim();
+      if (order && resultSummary) {
+        order.resultSummary = resultSummary;
+        order.status = 'Completed';
+        order.completedAt = nowStr().slice(0, 16);
+        logAudit(role, req.session.userId, 'lab_order_completed', 'lab_order', id, `${order.testName} completed`, req.ip);
+        notify('patient', order.patientUserId, 'Lab result ready', `${order.testName} result has been published.`);
+        flash(req, 'success', res.locals.lang === 'pt' ? 'Laudo registrado e liberado.' : 'Lab result published.');
+      }
+      return res.redirect(redirectTo);
+    }
+
+    const patientUserId = Number(req.body.patientUserId);
+    const patient = db.users.find((u) => Number(u.id) === patientUserId);
+    const doctorId = role === 'doctor' ? req.session.userId : Number(req.body.doctorId || 1);
+    const testName = String(req.body.testName || '').trim();
+    const category = String(req.body.category || 'Laboratory').trim();
+    if (patient && testName) {
+      const id = nextId('labOrders');
+      db.labOrders.unshift({
+        id,
+        patientUserId,
+        patientName: patient.fullName,
+        doctorId,
+        testName,
+        category,
+        status: 'In Analysis',
+        resultSummary: res.locals.lang === 'pt' ? 'Aguardando conclusão laboratorial' : 'Pending laboratory report',
+        orderedAt: nowStr().slice(0, 16),
+        completedAt: null
+      });
+      logAudit(role, req.session.userId, 'lab_order_created', 'lab_order', id, `${testName} for ${patient.fullName}`, req.ip);
+      flash(req, 'success', res.locals.lang === 'pt' ? 'Solicitação de exame registrada.' : 'Lab exam requested.');
+    }
+    res.redirect(redirectTo);
+  };
+}
+
+app.get('/hms/doctor/triage.php', requireRole('doctor', '/hms/doctor/index.php'), handleTriageGet('doctor', '/hms/doctor/triage.php'));
+app.post('/hms/doctor/triage.php', requireRole('doctor', '/hms/doctor/index.php'), handleTriagePost('doctor', '/hms/doctor/triage.php'));
+app.get('/hms/doctor/beds.php', requireRole('doctor', '/hms/doctor/index.php'), handleBedsGet('doctor', '/hms/doctor/beds.php'));
+app.post('/hms/doctor/beds.php', requireRole('doctor', '/hms/doctor/index.php'), handleBedsPost('doctor', '/hms/doctor/beds.php'));
+app.get('/hms/doctor/lab-orders.php', requireRole('doctor', '/hms/doctor/index.php'), handleLabOrdersGet('doctor', '/hms/doctor/lab-orders.php'));
+app.post('/hms/doctor/lab-orders.php', requireRole('doctor', '/hms/doctor/index.php'), handleLabOrdersPost('doctor', '/hms/doctor/lab-orders.php'));
+
 app.get('/hms/doctor/logout.php', (req, res) => {
   req.session.destroy(() => res.redirect('/hms/doctor/index.php'));
 });
@@ -744,26 +1166,10 @@ app.get('/hms/doctor/logout.php', (req, res) => {
 // ---------- Admin Portal ----------
 app.get(['/hms/admin', '/hms/admin/', '/hms/admin/index.php'], (req, res) => {
   if (req.session?.role === 'admin') return res.redirect('/hms/admin/dashboard.php');
-  res.render('admin/login');
+  renderUnifiedAuth(req, res, 'login', 'admin');
 });
 
-app.post('/hms/admin/index.php', (req, res) => {
-  const username = String(req.body.username || '').trim();
-  const password = String(req.body.password || '');
-  const admin = db.admins.find((a) => a.username === username);
-  if (admin && passwordMatches(password, admin.password)) {
-    if (!String(admin.password).startsWith('$2')) {
-      admin.password = hashPassword(password);
-    }
-    req.session.userId = admin.id;
-    req.session.role = 'admin';
-    req.session.userName = admin.username;
-    logAudit('admin', admin.id, 'admin_login', 'admin', admin.id, 'Admin logged in.', req.ip);
-    return res.redirect('/hms/admin/dashboard.php');
-  }
-  flash(req, 'danger', 'Invalid username or password.');
-  res.redirect('/hms/admin/index.php');
-});
+app.post('/hms/admin/index.php', (req, res) => performAdminLogin(req, res, '/hms/admin/index.php'));
 
 app.get('/hms/admin/dashboard.php', requireRole('admin', '/hms/admin/index.php'), (req, res) => {
   const statusLabels = VALID_STATUSES;
@@ -775,7 +1181,12 @@ app.get('/hms/admin/dashboard.php', requireRole('admin', '/hms/admin/index.php')
       doctors: db.doctors.length,
       patients: db.patients.length,
       appointments: db.appointments.length,
-      newQueries: db.contactQueries.filter((q) => q.IsRead == null).length
+      newQueries: db.contactQueries.filter((q) => q.IsRead == null).length,
+      availableBeds: db.beds.filter((b) => b.status === 'Available').length,
+      totalBeds: db.beds.length,
+      triageWaiting: db.triageQueue.filter((t) => t.status === 'Waiting').length,
+      lowStockMeds: db.pharmacyStock.filter((m) => m.stock <= m.minStock).length,
+      unpaidInvoices: db.invoices.filter((i) => i.status === 'Unpaid').length
     },
     statusLabels,
     statusTotals,
@@ -1226,6 +1637,108 @@ app.post('/hms/admin/change-password.php', requireRole('admin', '/hms/admin/inde
     flash(req, 'success', 'Password changed successfully.');
   }
   res.redirect('/hms/admin/change-password.php');
+});
+
+// Admin new hospital operations routes
+app.get('/hms/admin/triage.php', requireRole('admin', '/hms/admin/index.php'), handleTriageGet('admin', '/hms/admin/triage.php'));
+app.post('/hms/admin/triage.php', requireRole('admin', '/hms/admin/index.php'), handleTriagePost('admin', '/hms/admin/triage.php'));
+app.get('/hms/admin/beds.php', requireRole('admin', '/hms/admin/index.php'), handleBedsGet('admin', '/hms/admin/beds.php'));
+app.post('/hms/admin/beds.php', requireRole('admin', '/hms/admin/index.php'), handleBedsPost('admin', '/hms/admin/beds.php'));
+app.get('/hms/admin/lab-orders.php', requireRole('admin', '/hms/admin/index.php'), handleLabOrdersGet('admin', '/hms/admin/lab-orders.php'));
+app.post('/hms/admin/lab-orders.php', requireRole('admin', '/hms/admin/index.php'), handleLabOrdersPost('admin', '/hms/admin/lab-orders.php'));
+
+app.get('/hms/admin/pharmacy.php', requireRole('admin', '/hms/admin/index.php'), (req, res) => {
+  const items = db.pharmacyStock.slice().sort((a, b) => (a.stock <= a.minStock ? -1 : 1) || a.id - b.id);
+  res.render('admin/pharmacy', {
+    items,
+    lowStockCount: items.filter((m) => m.stock <= m.minStock).length
+  });
+});
+
+app.post('/hms/admin/pharmacy.php', requireRole('admin', '/hms/admin/index.php'), (req, res) => {
+  const action = String(req.body.action || 'create');
+  if (action === 'adjust') {
+    const id = Number(req.body.id);
+    const delta = Number(req.body.delta || 0);
+    const item = db.pharmacyStock.find((m) => Number(m.id) === id);
+    if (item && Number.isFinite(delta)) {
+      item.stock = Math.max(0, item.stock + delta);
+      logAudit('admin', req.session.userId, 'pharmacy_stock_adjusted', 'pharmacy', id, `${item.name}: ${delta >= 0 ? '+' : ''}${delta} -> ${item.stock}`, req.ip);
+      flash(req, 'success', res.locals.lang === 'pt' ? 'Estoque atualizado.' : 'Pharmacy inventory updated.');
+    }
+    return res.redirect('/hms/admin/pharmacy.php');
+  }
+  const name = String(req.body.name || '').trim();
+  const category = String(req.body.category || '').trim();
+  const unit = String(req.body.unit || 'Unidades / Units').trim();
+  const stock = Math.max(0, Number(req.body.stock || 0));
+  const minStock = Math.max(0, Number(req.body.minStock || 20));
+  const batch = String(req.body.batch || '').trim();
+  const expiresAt = String(req.body.expiresAt || '').trim();
+  if (name) {
+    const id = nextId('pharmacyStock');
+    db.pharmacyStock.push({ id, name, category, unit, stock, minStock, batch, expiresAt });
+    logAudit('admin', req.session.userId, 'pharmacy_item_added', 'pharmacy', id, `${name} (${stock})`, req.ip);
+    flash(req, 'success', res.locals.lang === 'pt' ? 'Medicamento cadastrado no estoque.' : 'Medication added to stock.');
+  }
+  res.redirect('/hms/admin/pharmacy.php');
+});
+
+app.get('/hms/admin/billing.php', requireRole('admin', '/hms/admin/index.php'), (req, res) => {
+  const statusFilter = String(req.query.status || '').trim();
+  let invoices = db.invoices.slice();
+  if (statusFilter) invoices = invoices.filter((i) => i.status === statusFilter);
+  invoices.sort((a, b) => b.id - a.id);
+  const totalPaid = db.invoices.filter((i) => i.status === 'Paid').reduce((sum, i) => sum + Number(i.amount || 0), 0);
+  const totalUnpaid = db.invoices.filter((i) => i.status === 'Unpaid').reduce((sum, i) => sum + Number(i.amount || 0), 0);
+  res.render('admin/billing', {
+    invoices,
+    statusFilter,
+    users: db.users,
+    appointments: db.appointments.map(enrichAppointment),
+    totalPaid,
+    totalUnpaid
+  });
+});
+
+app.post('/hms/admin/billing.php', requireRole('admin', '/hms/admin/index.php'), (req, res) => {
+  const action = String(req.body.action || 'create');
+  if (action === 'mark_paid') {
+    const id = Number(req.body.id);
+    const inv = db.invoices.find((i) => Number(i.id) === id);
+    if (inv) {
+      inv.status = 'Paid';
+      inv.paidAt = todayStr();
+      logAudit('admin', req.session.userId, 'invoice_paid', 'invoice', id, `Invoice #${id} marked Paid`, req.ip);
+      flash(req, 'success', res.locals.lang === 'pt' ? 'Guia marcada como paga.' : 'Invoice marked as paid.');
+    }
+    return res.redirect('/hms/admin/billing.php');
+  }
+  const patientUserId = Number(req.body.patientUserId);
+  const patient = db.users.find((u) => Number(u.id) === patientUserId);
+  const appointmentId = Number(req.body.appointmentId || 0) || null;
+  const description = String(req.body.description || '').trim();
+  const amount = Math.max(0, Number(req.body.amount || 0));
+  const method = String(req.body.method || 'PIX').trim();
+  if (patient && description && amount > 0) {
+    const id = nextId('invoices');
+    db.invoices.unshift({
+      id,
+      appointmentId,
+      patientUserId,
+      patientName: patient.fullName,
+      description,
+      amount,
+      method,
+      status: 'Unpaid',
+      issuedAt: todayStr(),
+      paidAt: null
+    });
+    logAudit('admin', req.session.userId, 'invoice_created', 'invoice', id, `${patient.fullName} - ${amount}`, req.ip);
+    notify('patient', patientUserId, 'New hospital invoice', `${description} (#${id})`);
+    flash(req, 'success', res.locals.lang === 'pt' ? 'Guia de faturamento emitida.' : 'Invoice issued.');
+  }
+  res.redirect('/hms/admin/billing.php');
 });
 
 app.get('/hms/admin/logout.php', (req, res) => {

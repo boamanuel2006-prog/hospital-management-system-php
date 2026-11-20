@@ -1,61 +1,53 @@
-<%- include('../partials/layout-header', { title: 'Doctor Dashboard', role: 'doctor', active: 'dashboard' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.dashboard'), role: 'doctor', active: 'dashboard' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Doctor Dashboard</h1>
-    <div class="text-muted">Today's schedule, prescription work, and follow-up planning.</div>
+    <h1><%= lang === 'pt' ? 'Painel Clínico do Médico' : 'Physician Dashboard' %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Agenda diária, fila de triagem, prescrições, exames e leitos.' : 'Daily visits, emergency triage queue, prescriptions, lab orders, and beds.' %></div>
   </div>
   <div class="d-flex flex-wrap gap-2">
-    <a class="btn btn-outline-primary" href="/hms/doctor/availability.php"><i class="bi bi-clock-history me-1"></i>Availability</a>
-    <a class="btn btn-primary" href="/hms/doctor/prescriptions.php"><i class="bi bi-file-medical me-1"></i>Prescription</a>
+    <a class="hms-btn-secondary" href="/hms/doctor/triage.php"><i class="bi bi-heart-pulse"></i><%= t('sidebar.triage') %></a>
+    <a class="hms-btn-primary" href="/hms/doctor/prescriptions.php"><i class="bi bi-file-medical"></i><%= t('sidebar.prescriptions') %></a>
   </div>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-12 col-sm-6 col-xl-3">
-    <a class="hms-card hms-stat d-block text-reset" href="/hms/doctor/appointment-history.php?date=<%= today %>">
-      <span class="icon"><i class="bi bi-calendar-day"></i></span>
-      <div class="value"><%= stats.today %></div>
-      <div class="label">Today</div>
-    </a>
-  </div>
-  <div class="col-12 col-sm-6 col-xl-3">
-    <div class="hms-card hms-stat">
-      <span class="icon"><i class="bi bi-hourglass-split"></i></span>
-      <div class="value"><%= stats.pending %></div>
-      <div class="label">Pending</div>
-    </div>
-  </div>
-  <div class="col-12 col-sm-6 col-xl-3">
-    <div class="hms-card hms-stat">
-      <span class="icon"><i class="bi bi-check2-circle"></i></span>
-      <div class="value"><%= stats.completed %></div>
-      <div class="label">Completed</div>
-    </div>
-  </div>
-  <div class="col-12 col-sm-6 col-xl-3">
-    <a class="hms-card hms-stat d-block text-reset" href="/hms/doctor/manage-patient.php">
-      <span class="icon"><i class="bi bi-people"></i></span>
-      <div class="value"><%= stats.patients %></div>
-      <div class="label">Patients</div>
-    </a>
-  </div>
+<div class="hms-kpi-grid">
+  <a class="hms-kpi-card" href="/hms/doctor/appointment-history.php?date=<%= today %>">
+    <div class="hms-kpi-label"><%= lang === 'pt' ? 'Consultas Hoje' : 'Today Visits' %></div>
+    <div class="hms-kpi-value"><%= stats.today %></div>
+    <div class="hms-kpi-foot tabular"><%= stats.pending %> <%= t('status.Pending') %> · <%= stats.completed %> <%= t('status.Completed') %></div>
+  </a>
+  <a class="hms-kpi-card" href="/hms/doctor/triage.php">
+    <div class="hms-kpi-label"><%= lang === 'pt' ? 'Aguardando Triagem' : 'Waiting Triage' %></div>
+    <div class="hms-kpi-value"><%= stats.triageWaiting %></div>
+    <div class="hms-kpi-foot"><%= lang === 'pt' ? 'Pronto-socorro' : 'Emergency intake' %></div>
+  </a>
+  <a class="hms-kpi-card" href="/hms/doctor/lab-orders.php">
+    <div class="hms-kpi-label"><%= lang === 'pt' ? 'Exames em Análise' : 'Pending Labs' %></div>
+    <div class="hms-kpi-value"><%= stats.pendingLabs %></div>
+    <div class="hms-kpi-foot"><%= t('sidebar.labExams') %></div>
+  </a>
+  <a class="hms-kpi-card" href="/hms/doctor/beds.php">
+    <div class="hms-kpi-label"><%= lang === 'pt' ? 'Leitos Disponíveis' : 'Available Beds' %></div>
+    <div class="hms-kpi-value"><%= stats.availableBeds %></div>
+    <div class="hms-kpi-foot tabular"><%= stats.patients %> <%= t('sidebar.patients') %></div>
+  </a>
 </div>
 
-<div class="row g-3">
+<div class="row g-4">
   <div class="col-xl-8">
-    <div class="hms-card p-3">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="h5 mb-0">Recent &amp; Scheduled Appointments</h2>
-        <input class="form-control form-control-sm" style="max-width:240px" placeholder="Search" data-table-search="#todayTable">
+    <div class="hms-surface-card p-3">
+      <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h5 mb-0"><%= lang === 'pt' ? 'Consultas Recentes e Agendadas' : 'Recent & Scheduled Appointments' %></h2>
+        <input class="form-control form-control-sm" style="max-width:240px" placeholder="<%= t('common.search') %>" data-table-search="#todayTable">
       </div>
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="todayTable" data-sortable>
+        <table class="hms-table" id="todayTable" data-sortable>
           <thead>
           <tr>
-            <th data-sort>Patient</th>
-            <th data-sort>Date / Time</th>
-            <th data-sort>Status</th>
-            <th class="text-end">Action</th>
+            <th data-sort><%= t('common.patient') %></th>
+            <th data-sort><%= t('common.date') %> / <%= t('common.time') %></th>
+            <th data-sort><%= t('common.status') %></th>
+            <th class="text-end"><%= t('common.actions') %></th>
           </tr>
           </thead>
           <tbody>
@@ -65,15 +57,15 @@
                 <div class="fw-semibold"><%= appointment.fullName %></div>
                 <div class="small text-muted"><%= appointment.email %></div>
               </td>
-              <td><%= appointment.appointmentDate %> <%= appointment.appointmentTime %></td>
+              <td class="tabular"><%= appointment.appointmentDate %> <%= appointment.appointmentTime %></td>
               <td><%- statusBadge(appointment.status) %></td>
               <td class="text-end">
-                <a class="btn btn-sm btn-outline-primary" href="/hms/doctor/prescriptions.php?appointment_id=<%= appointment.id %>">Record</a>
+                <a class="btn btn-sm btn-outline-primary" href="/hms/doctor/prescriptions.php?appointment_id=<%= appointment.id %>"><%= lang === 'pt' ? 'Atender / Receita' : 'Record' %></a>
               </td>
             </tr>
           <% }); %>
           <% if (!appointments.length) { %>
-            <tr><td colspan="4" class="text-center text-muted py-4">No appointments scheduled.</td></tr>
+            <tr><td colspan="4" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
           <% } %>
           </tbody>
         </table>
@@ -81,23 +73,23 @@
     </div>
   </div>
   <div class="col-xl-4">
-    <div class="hms-card p-3">
+    <div class="hms-surface-card p-3">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="h5 mb-0">Follow-ups</h2>
-        <span class="badge text-bg-light"><%= followups.length %></span>
+        <h2 class="h5 mb-0"><%= lang === 'pt' ? 'Retornos Agendados' : 'Follow-ups' %></h2>
+        <span class="hms-meta-line"><strong class="tabular text-dark"><%= followups.length %></strong></span>
       </div>
       <% if (followups.length) { %>
-        <div class="timeline">
+        <div class="hms-timeline">
           <% followups.forEach(function(followup) { %>
-            <div class="timeline-item">
+            <div class="hms-timeline-item">
               <div class="fw-semibold"><%= followup.fullName %></div>
-              <div class="small text-muted"><%= followup.followup_date %></div>
+              <div class="small text-muted tabular"><%= followup.followup_date %></div>
               <div class="small"><%= followup.diagnosis %></div>
             </div>
           <% }); %>
         </div>
       <% } else { %>
-        <div class="text-muted">No follow-up appointments recorded yet.</div>
+        <div class="text-muted small"><%= t('common.noRecords') %></div>
       <% } %>
     </div>
   </div>

@@ -1,0 +1,117 @@
+<%- include('../partials/layout-header', { title: t('sidebar.pharmacy'), role: 'admin', active: 'pharmacy' }) %>
+<div class="hms-page-header">
+  <div>
+    <h1><%= t('sidebar.pharmacy') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Controle de estoque hospitalar, lotes, validade e dispensação para enfermarias.' : 'Hospital medication inventory, batch tracking, expiration, and ward dispensing.' %></div>
+  </div>
+  <div class="hms-meta-line">
+    <span><%= lang === 'pt' ? 'Itens abaixo do mínimo' : 'Low-stock alerts' %>:</span>
+    <strong class="tabular <%= lowStockCount > 0 ? 'text-danger' : 'text-dark' %>"><%= lowStockCount %></strong>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Cadastrar Medicamento' : 'Add Medication' %></h2>
+      <form method="post" action="/hms/admin/pharmacy.php">
+        <input type="hidden" name="action" value="create">
+        <div class="mb-2">
+          <label class="form-label"><%= lang === 'pt' ? 'Nome e Dosagem' : 'Medication & Strength' %></label>
+          <input class="form-control" name="name" placeholder="Paracetamol 750mg" required>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label"><%= lang === 'pt' ? 'Categoria' : 'Category' %></label>
+            <input class="form-control" name="category" placeholder="Analgesic" required>
+          </div>
+          <div class="col-6">
+            <label class="form-label"><%= lang === 'pt' ? 'Unidade' : 'Unit' %></label>
+            <input class="form-control" name="unit" value="Comprimidos / Tabs" required>
+          </div>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label"><%= lang === 'pt' ? 'Estoque Inicial' : 'Initial Stock' %></label>
+            <input type="number" class="form-control" name="stock" min="0" value="100" required>
+          </div>
+          <div class="col-6">
+            <label class="form-label"><%= lang === 'pt' ? 'Estoque Mínimo' : 'Min Threshold' %></label>
+            <input type="number" class="form-control" name="minStock" min="0" value="50" required>
+          </div>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label"><%= lang === 'pt' ? 'Lote' : 'Batch' %></label>
+            <input class="form-control" name="batch" placeholder="L-2026-30" required>
+          </div>
+          <div class="col-6">
+            <label class="form-label"><%= lang === 'pt' ? 'Validade' : 'Expires' %></label>
+            <input type="date" class="form-control" name="expiresAt" required>
+          </div>
+        </div>
+        <button class="hms-btn-primary w-100" type="submit"><%= t('common.save') %></button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="hms-surface-card p-3">
+      <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h5 mb-0"><%= lang === 'pt' ? 'Inventário Farmacêutico' : 'Medication Inventory' %></h2>
+        <input class="form-control form-control-sm" style="max-width:240px" placeholder="<%= t('common.search') %>" data-table-search="#pharmacyTable">
+      </div>
+      <div class="table-responsive">
+        <table class="hms-table" id="pharmacyTable" data-sortable>
+          <thead>
+          <tr>
+            <th data-sort><%= lang === 'pt' ? 'Medicamento' : 'Medication' %></th>
+            <th data-sort><%= lang === 'pt' ? 'Lote / Validade' : 'Batch / Expiry' %></th>
+            <th data-sort class="text-end"><%= lang === 'pt' ? 'Saldo' : 'Stock' %></th>
+            <th class="text-end"><%= lang === 'pt' ? 'Movimentação' : 'Adjust' %></th>
+          </tr>
+          </thead>
+          <tbody>
+          <% items.forEach(function(item) { const isLow = item.stock <= item.minStock; %>
+            <tr>
+              <td>
+                <div class="fw-semibold"><%= item.name %></div>
+                <div class="hms-meta-line">
+                  <span><%= item.category %></span>
+                  <span aria-hidden="true">·</span>
+                  <span><%= item.unit %></span>
+                </div>
+              </td>
+              <td>
+                <div class="tabular small"><%= item.batch %></div>
+                <div class="tabular small text-muted"><%= item.expiresAt %></div>
+              </td>
+              <td class="text-end">
+                <div class="tabular fw-bold <%= isLow ? 'text-danger' : 'text-dark' %>"><%= item.stock %></div>
+                <div class="small text-muted tabular">min <%= item.minStock %></div>
+              </td>
+              <td class="text-end">
+                <div class="d-inline-flex gap-1">
+                  <form method="post" action="/hms/admin/pharmacy.php" class="d-inline">
+                    <input type="hidden" name="action" value="adjust">
+                    <input type="hidden" name="id" value="<%= item.id %>">
+                    <input type="hidden" name="delta" value="-10">
+                    <button class="btn btn-sm btn-outline-secondary tabular" type="submit" title="<%= lang === 'pt' ? 'Dispensar 10' : 'Dispense 10' %>">-10</button>
+                  </form>
+                  <form method="post" action="/hms/admin/pharmacy.php" class="d-inline">
+                    <input type="hidden" name="action" value="adjust">
+                    <input type="hidden" name="id" value="<%= item.id %>">
+                    <input type="hidden" name="delta" value="50">
+                    <button class="btn btn-sm btn-outline-primary tabular" type="submit" title="<%= lang === 'pt' ? 'Repor 50' : 'Restock 50' %>">+50</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

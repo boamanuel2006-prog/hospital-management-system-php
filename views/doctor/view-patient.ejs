@@ -1,36 +1,44 @@
-<%- include('../partials/layout-header', { title: 'Patient Details', role: role, active: 'patients' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: lang === 'pt' ? 'Prontuário do Paciente' : 'Patient Details', role: role, active: 'patients' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Patient Details</h1>
-    <div class="text-muted">Clinical patient record and medical history.</div>
+    <h1><%= patient.PatientName %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Prontuário clínico e evolução de sinais vitais.' : 'Clinical patient record and medical history.' %></div>
   </div>
-  <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#historyModal">Add History</button>
+  <button class="hms-btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#historyModal"><%= lang === 'pt' ? 'Registrar Evolução' : 'Add History' %></button>
 </div>
 
-<div class="row g-3">
+<div class="row g-4">
   <div class="col-lg-4">
-    <div class="hms-card p-3">
-      <h2 class="h5 mb-3"><%= patient.PatientName %></h2>
-      <div class="mb-2"><span class="text-muted">Email</span><div><%= patient.PatientEmail %></div></div>
-      <div class="mb-2"><span class="text-muted">Contact</span><div><%= patient.PatientContno %></div></div>
-      <div class="mb-2"><span class="text-muted">Gender / Age</span><div><%= patient.PatientGender %> / <%= patient.PatientAge %></div></div>
-      <div class="mb-2"><span class="text-muted">Address</span><div><%= patient.PatientAdd %></div></div>
-      <div><span class="text-muted">Initial History</span><div><%= patient.PatientMedhis %></div></div>
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Identificação' : 'Patient Summary' %></h2>
+      <div class="mb-2"><span class="text-muted small"><%= t('home.email') %></span><div><%= patient.PatientEmail %></div></div>
+      <div class="mb-2"><span class="text-muted small"><%= t('home.phone') %></span><div class="tabular"><%= patient.PatientContno %></div></div>
+      <div class="mb-2"><span class="text-muted small"><%= t('auth.gender') %> / <%= lang === 'pt' ? 'Idade' : 'Age' %></span><div class="tabular"><%= patient.PatientGender %> / <%= patient.PatientAge %></div></div>
+      <div class="mb-2"><span class="text-muted small"><%= t('home.addressLabel') %></span><div><%= patient.PatientAdd %></div></div>
+      <div><span class="text-muted small"><%= lang === 'pt' ? 'Anamnese Inicial' : 'Initial History' %></span><div><%= patient.PatientMedhis %></div></div>
     </div>
   </div>
   <div class="col-lg-8">
-    <div class="hms-card p-3">
-      <h2 class="h5 mb-3">Medical History</h2>
-      <div class="timeline">
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Evolução Clínica' : 'Medical History' %></h2>
+      <div class="hms-timeline">
         <% history.forEach(function(item) { %>
-          <div class="timeline-item">
-            <div class="fw-semibold"><%= item.CreationDate %></div>
-            <div class="small text-muted">BP: <%= item.BloodPressure %> | Sugar: <%= item.BloodSugar %> | Weight: <%= item.Weight %> | Temp: <%= item.Temperature %></div>
+          <div class="hms-timeline-item">
+            <div class="fw-semibold tabular"><%= item.CreationDate %></div>
+            <div class="hms-meta-line tabular mb-1">
+              <span>PA: <%= item.BloodPressure %></span>
+              <span aria-hidden="true">·</span>
+              <span><%= lang === 'pt' ? 'Glicemia' : 'Sugar' %>: <%= item.BloodSugar %></span>
+              <span aria-hidden="true">·</span>
+              <span><%= item.Weight %></span>
+              <span aria-hidden="true">·</span>
+              <span><%= item.Temperature %></span>
+            </div>
             <div><%= item.MedicalPres %></div>
           </div>
         <% }); %>
         <% if (!history.length) { %>
-          <div class="text-muted">No medical history added yet.</div>
+          <div class="text-muted small"><%= t('common.noRecords') %></div>
         <% } %>
       </div>
     </div>
@@ -41,21 +49,21 @@
   <div class="modal-dialog">
     <form class="modal-content" method="post" action="<%= actionUrl %>">
       <div class="modal-header">
-        <h5 class="modal-title">Add Medical History</h5>
+        <h5 class="modal-title"><%= lang === 'pt' ? 'Nova Evolução Clínica' : 'Add Medical History' %></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="row g-3">
-          <div class="col-sm-6"><label class="form-label">Blood Pressure</label><input class="form-control" name="bp" required></div>
-          <div class="col-sm-6"><label class="form-label">Blood Sugar</label><input class="form-control" name="bs" required></div>
-          <div class="col-sm-6"><label class="form-label">Weight</label><input class="form-control" name="weight" required></div>
-          <div class="col-sm-6"><label class="form-label">Temperature</label><input class="form-control" name="temp" required></div>
+          <div class="col-sm-6"><label class="form-label"><%= lang === 'pt' ? 'Pressão Arterial' : 'Blood Pressure' %></label><input class="form-control" name="bp" required></div>
+          <div class="col-sm-6"><label class="form-label"><%= lang === 'pt' ? 'Glicemia' : 'Blood Sugar' %></label><input class="form-control" name="bs" required></div>
+          <div class="col-sm-6"><label class="form-label"><%= lang === 'pt' ? 'Peso' : 'Weight' %></label><input class="form-control" name="weight" required></div>
+          <div class="col-sm-6"><label class="form-label"><%= lang === 'pt' ? 'Temperatura' : 'Temperature' %></label><input class="form-control" name="temp" required></div>
         </div>
-        <div class="mt-3"><label class="form-label">Prescription / Notes</label><textarea class="form-control" name="pres" rows="5" required></textarea></div>
+        <div class="mt-3"><label class="form-label"><%= lang === 'pt' ? 'Conduta / Prescrição' : 'Prescription / Notes' %></label><textarea class="form-control" name="pres" rows="5" required></textarea></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-        <button class="btn btn-primary" type="submit">Save</button>
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal"><%= t('common.close') %></button>
+        <button class="btn btn-primary" type="submit"><%= t('common.save') %></button>
       </div>
     </form>
   </div>

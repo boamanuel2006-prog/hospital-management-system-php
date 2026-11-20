@@ -1,19 +1,19 @@
-<%- include('../partials/layout-header', { title: 'Doctor Availability', role: 'doctor', active: 'availability' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.availability'), role: 'doctor', active: 'availability' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Availability</h1>
-    <div class="text-muted">Set weekly or date-specific slots that patients can book.</div>
+    <h1><%= t('sidebar.availability') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Defina janelas semanais ou datas específicas para agendamento de pacientes.' : 'Set weekly or date-specific slots that patients can book.' %></div>
   </div>
 </div>
 
-<div class="row g-3">
+<div class="row g-4">
   <div class="col-lg-4">
-    <div class="hms-card p-3">
-      <h2 class="h5 mb-3">Add Slot</h2>
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Novo Horário' : 'Add Slot' %></h2>
       <form method="post" action="/hms/doctor/availability.php">
         <input type="hidden" name="action" value="create">
         <div class="mb-3">
-          <label class="form-label">Weekly Day</label>
+          <label class="form-label"><%= lang === 'pt' ? 'Dia da Semana' : 'Weekly Day' %></label>
           <select class="form-select" name="day_of_week" required>
             <% days.forEach(function(dayName, index) { %>
               <option value="<%= index %>"><%= dayName %></option>
@@ -21,66 +21,65 @@
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label">Specific Date</label>
+          <label class="form-label"><%= lang === 'pt' ? 'Data Específica (Opcional)' : 'Specific Date (Optional)' %></label>
           <input class="form-control" type="date" name="available_date">
-          <div class="form-text">Optional. Use it for one-day overrides.</div>
         </div>
         <div class="row g-3">
           <div class="col-6">
-            <label class="form-label">Start</label>
+            <label class="form-label"><%= lang === 'pt' ? 'Início' : 'Start' %></label>
             <input class="form-control" type="time" name="start_time" required>
           </div>
           <div class="col-6">
-            <label class="form-label">End</label>
+            <label class="form-label"><%= lang === 'pt' ? 'Término' : 'End' %></label>
             <input class="form-control" type="time" name="end_time" required>
           </div>
         </div>
         <div class="row g-3 mt-1">
           <div class="col-6">
-            <label class="form-label">Slot Minutes</label>
+            <label class="form-label"><%= lang === 'pt' ? 'Duração (min)' : 'Slot Minutes' %></label>
             <input class="form-control" type="number" name="slot_duration_minutes" min="5" value="30" required>
           </div>
           <div class="col-6">
-            <label class="form-label">Max Bookings</label>
+            <label class="form-label"><%= lang === 'pt' ? 'Vagas Máx.' : 'Max Bookings' %></label>
             <input class="form-control" type="number" name="max_appointments" min="1" value="1" required>
           </div>
         </div>
-        <button class="btn btn-primary w-100 mt-4" type="submit">Save Slot</button>
+        <button class="hms-btn-primary w-100 mt-4" type="submit"><%= t('common.save') %></button>
       </form>
     </div>
   </div>
   <div class="col-lg-8">
-    <div class="hms-card p-3">
-      <h2 class="h5 mb-3">Current Slots</h2>
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Horários Cadastrados' : 'Current Slots' %></h2>
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" data-sortable>
+        <table class="hms-table" data-sortable>
           <thead>
           <tr>
-            <th data-sort>Day / Date</th>
-            <th data-sort>Time</th>
-            <th data-sort>Capacity</th>
-            <th data-sort>Status</th>
-            <th class="text-end">Action</th>
+            <th data-sort><%= lang === 'pt' ? 'Dia / Data' : 'Day / Date' %></th>
+            <th data-sort><%= t('common.time') %></th>
+            <th data-sort><%= lang === 'pt' ? 'Capacidade' : 'Capacity' %></th>
+            <th data-sort><%= t('common.status') %></th>
+            <th class="text-end"><%= t('common.actions') %></th>
           </tr>
           </thead>
           <tbody>
           <% slots.forEach(function(slot) { %>
             <tr>
-              <td><%= slot.available_date || days[slot.day_of_week] %></td>
-              <td><%= String(slot.start_time).slice(0, 5) %> - <%= String(slot.end_time).slice(0, 5) %></td>
-              <td><%= slot.slot_duration_minutes %> min / <%= slot.max_appointments %> booking(s)</td>
-              <td><%- Number(slot.is_active) === 1 ? '<span class="badge text-bg-success">Active</span>' : '<span class="badge text-bg-secondary">Inactive</span>' %></td>
+              <td class="tabular"><%= slot.available_date || days[slot.day_of_week] %></td>
+              <td class="tabular"><%= String(slot.start_time).slice(0, 5) %> - <%= String(slot.end_time).slice(0, 5) %></td>
+              <td class="tabular"><%= slot.slot_duration_minutes %> min · <%= slot.max_appointments %> <%= lang === 'pt' ? 'vagas' : 'slots' %></td>
+              <td><%- Number(slot.is_active) === 1 ? statusBadge('Approved') : statusBadge('Cancelled') %></td>
               <td class="text-end">
-                <form method="post" action="/hms/doctor/availability.php" onsubmit="return confirm('Remove this slot?');">
+                <form method="post" action="/hms/doctor/availability.php" onsubmit="return confirm('<%= lang === 'pt' ? 'Remover este horário?' : 'Remove this slot?' %>');">
                   <input type="hidden" name="action" value="delete">
                   <input type="hidden" name="id" value="<%= slot.id %>">
-                  <button class="btn btn-sm btn-outline-secondary" type="submit">Remove</button>
+                  <button class="btn btn-sm btn-outline-secondary" type="submit"><%= t('common.remove') %></button>
                 </form>
               </td>
             </tr>
           <% }); %>
           <% if (!slots.length) { %>
-            <tr><td colspan="5" class="text-center text-muted py-4">No availability slots found.</td></tr>
+            <tr><td colspan="5" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
           <% } %>
           </tbody>
         </table>

@@ -1,20 +1,20 @@
-<%- include('../partials/layout-header', { title: 'Prescriptions', role: 'doctor', active: 'prescriptions' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.prescriptions'), role: 'doctor', active: 'prescriptions' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Prescriptions</h1>
-    <div class="text-muted">Record diagnosis, treatment, medicines, and mark appointments completed.</div>
+    <h1><%= t('sidebar.prescriptions') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Registre diagnóstico, conduta, medicamentos e conclua a consulta.' : 'Record diagnosis, treatment, medicines, and mark appointments completed.' %></div>
   </div>
 </div>
 
-<div class="row g-3">
+<div class="row g-4">
   <div class="col-lg-5">
-    <div class="hms-card p-3">
-      <h2 class="h5 mb-3">Save Prescription</h2>
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Emitir Prescrição' : 'Save Prescription' %></h2>
       <form method="post" action="/hms/doctor/prescriptions.php">
         <div class="mb-3">
-          <label class="form-label">Appointment</label>
+          <label class="form-label"><%= lang === 'pt' ? 'Consulta' : 'Appointment' %></label>
           <select class="form-select" name="appointment_id" required>
-            <option value="">Select appointment</option>
+            <option value=""><%= lang === 'pt' ? 'Selecione a consulta' : 'Select appointment' %></option>
             <% appointments.forEach(function(a) { %>
               <option value="<%= a.id %>" <%= Number(selectedId) === Number(a.id) ? 'selected' : '' %>>
                 #<%= a.id %> - <%= a.fullName %> (<%= a.appointmentDate %> <%= a.appointmentTime %>)
@@ -23,56 +23,56 @@
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label">Diagnosis</label>
+          <label class="form-label"><%= lang === 'pt' ? 'Diagnóstico' : 'Diagnosis' %></label>
           <input class="form-control" name="diagnosis" value="<%= existing ? existing.diagnosis : '' %>" required>
         </div>
         <div class="mb-3">
-          <label class="form-label">Treatment</label>
+          <label class="form-label"><%= lang === 'pt' ? 'Conduta / Tratamento' : 'Treatment' %></label>
           <textarea class="form-control" name="treatment" rows="2" required><%= existing ? existing.treatment : '' %></textarea>
         </div>
         <div class="mb-3">
-          <label class="form-label">Medicines</label>
+          <label class="form-label"><%= lang === 'pt' ? 'Medicamentos e Posologia' : 'Medicines' %></label>
           <textarea class="form-control" name="medicines" rows="2" required><%= existing ? existing.medicines : '' %></textarea>
         </div>
         <div class="mb-3">
-          <label class="form-label">Notes</label>
+          <label class="form-label"><%= lang === 'pt' ? 'Observações' : 'Notes' %></label>
           <textarea class="form-control" name="notes" rows="2"><%= existing ? (existing.notes || '') : '' %></textarea>
         </div>
         <div class="mb-3">
-          <label class="form-label">Follow-up Date</label>
+          <label class="form-label"><%= lang === 'pt' ? 'Data de Retorno' : 'Follow-up Date' %></label>
           <input class="form-control" type="date" name="followup_date" value="<%= existing ? (existing.followup_date || '') : '' %>">
         </div>
-        <button class="btn btn-primary w-100" type="submit">Save Prescription</button>
+        <button class="hms-btn-primary w-100" type="submit"><%= t('common.save') %></button>
       </form>
     </div>
   </div>
   <div class="col-lg-7">
-    <div class="hms-card p-3">
-      <h2 class="h5 mb-3">Issued Prescriptions</h2>
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Prescrições Emitidas' : 'Issued Prescriptions' %></h2>
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" data-sortable>
+        <table class="hms-table" data-sortable>
           <thead>
           <tr>
-            <th data-sort>Appt #</th>
-            <th data-sort>Patient</th>
-            <th data-sort>Diagnosis</th>
-            <th data-sort>Follow-up</th>
+            <th data-sort>#</th>
+            <th data-sort><%= t('common.patient') %></th>
+            <th data-sort><%= lang === 'pt' ? 'Diagnóstico' : 'Diagnosis' %></th>
+            <th data-sort><%= lang === 'pt' ? 'Retorno' : 'Follow-up' %></th>
           </tr>
           </thead>
           <tbody>
           <% prescriptions.forEach(function(p) { %>
             <tr>
-              <td>#<%= p.appointment_id %></td>
+              <td class="tabular text-muted">#<%= p.appointment_id %></td>
               <td><%= p.fullName %></td>
               <td>
                 <div class="fw-semibold"><%= p.diagnosis %></div>
                 <div class="small text-muted"><%= p.medicines %></div>
               </td>
-              <td><%= p.followup_date || 'N/A' %></td>
+              <td class="tabular"><%= p.followup_date || '-' %></td>
             </tr>
           <% }); %>
           <% if (!prescriptions.length) { %>
-            <tr><td colspan="4" class="text-center text-muted py-4">No prescriptions issued yet.</td></tr>
+            <tr><td colspan="4" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
           <% } %>
           </tbody>
         </table>

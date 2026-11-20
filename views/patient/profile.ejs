@@ -1,38 +1,38 @@
-<%- include('../partials/layout-header', { title: 'My Profile', role: 'patient', active: 'profile' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.profile'), role: 'patient', active: 'profile' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>My Profile</h1>
-    <div class="text-muted">Update your contact and demographic details.</div>
+    <h1><%= t('sidebar.profile') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Atualize seus dados cadastrais e endereço.' : 'Update your contact and demographic details.' %></div>
   </div>
 </div>
-<div class="hms-card p-4" style="max-width:720px">
+<div class="hms-surface-card p-4" style="max-width:720px">
   <form method="post" action="/hms/edit-profile.php">
     <div class="row g-3">
       <div class="col-md-6">
-        <label class="form-label">Full Name</label>
+        <label class="form-label"><%= t('home.fullName') %></label>
         <input class="form-control" name="fname" value="<%= user.fullName %>" required>
       </div>
       <div class="col-md-6">
-        <label class="form-label">Email</label>
+        <label class="form-label"><%= t('home.email') %></label>
         <input class="form-control" value="<%= user.email %>" readonly>
       </div>
       <div class="col-md-6">
-        <label class="form-label">City</label>
+        <label class="form-label"><%= t('auth.city') %></label>
         <input class="form-control" name="city" value="<%= user.city %>" required>
       </div>
       <div class="col-md-6">
-        <label class="form-label">Gender</label>
+        <label class="form-label"><%= t('auth.gender') %></label>
         <select class="form-select" name="gender">
-          <option value="male" <%= user.gender === 'male' ? 'selected' : '' %>>Male</option>
-          <option value="female" <%= user.gender === 'female' ? 'selected' : '' %>>Female</option>
+          <option value="male" <%= user.gender === 'male' ? 'selected' : '' %>><%= t('auth.male') %></option>
+          <option value="female" <%= user.gender === 'female' ? 'selected' : '' %>><%= t('auth.female') %></option>
         </select>
       </div>
       <div class="col-12">
-        <label class="form-label">Address</label>
+        <label class="form-label"><%= t('home.addressLabel') %></label>
         <textarea class="form-control" name="address" rows="3" required><%= user.address %></textarea>
       </div>
     </div>
-    <button class="btn btn-primary mt-3" type="submit">Update Profile</button>
+    <button class="hms-btn-primary mt-3" type="submit"><%= t('common.save') %></button>
   </form>
 </div>
 <%- include('../partials/layout-footer') %>

@@ -1,0 +1,505 @@
+<%- include('../partials/auth-header', { title: t('auth.unifiedTitle'), heading: t('auth.unifiedTitle'), subtitle: t('auth.unifiedSub') }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="hms-lang-switch w-100 d-grid" style="grid-template-columns: 1fr 1fr;" role="tablist" aria-label="Auth Mode">
+    <a href="#" id="tabLogin" class="text-center py-2 <%= initialMode === 'login' ? 'active' : '' %>" role="tab" aria-selected="<%= initialMode === 'login' ? 'true' : 'false' %>"><%= t('auth.tabLogin') %></a>
+    <a href="#" id="tabRegister" class="text-center py-2 <%= initialMode === 'register' ? 'active' : '' %>" role="tab" aria-selected="<%= initialMode === 'register' ? 'true' : 'false' %>"><%= t('auth.tabRegister') %></a>
+  </div>
+</div>
+
+<div class="alert alert-danger py-2 small d-none" id="stepErrorBox" role="alert"></div>
+
+<!-- ==================== UNIFIED MULTI-STEP LOGIN ==================== -->
+<form method="post" action="/hms/auth/login" id="loginWizard" class="<%= initialMode === 'login' ? '' : 'd-none' %>" novalidate>
+  <input type="hidden" name="role" id="loginRoleInput" value="<%= initialRole %>">
+
+  <div class="hms-stepper" aria-label="Login Steps">
+    <div class="hms-step-item" data-login-step-ind="1"><span class="hms-step-num">1</span><span><%= t('auth.stepProfile') %></span></div>
+    <div class="hms-step-item" data-login-step-ind="2"><span class="hms-step-num">2</span><span><%= t('auth.stepIdentity') %></span></div>
+    <div class="hms-step-item" data-login-step-ind="3"><span class="hms-step-num">3</span><span><%= t('auth.stepCredentials') %></span></div>
+  </div>
+
+  <!-- Login Step 1: Role Selection -->
+  <div data-login-step="1">
+    <div class="d-grid gap-2 mb-3">
+      <button type="button" class="hms-role-option" data-role-pick="patient" data-target="login">
+        <span class="hms-role-icon"><i class="bi bi-person"></i></span>
+        <div>
+          <div class="fw-semibold text-dark"><%= t('roles.patient') %></div>
+          <div class="small text-muted"><%= t('auth.patientRoleDesc') %></div>
+        </div>
+      </button>
+      <button type="button" class="hms-role-option" data-role-pick="doctor" data-target="login">
+        <span class="hms-role-icon"><i class="bi bi-heart-pulse"></i></span>
+        <div>
+          <div class="fw-semibold text-dark"><%= t('roles.doctor') %></div>
+          <div class="small text-muted"><%= t('auth.doctorRoleDesc') %></div>
+        </div>
+      </button>
+      <button type="button" class="hms-role-option" data-role-pick="admin" data-target="login">
+        <span class="hms-role-icon"><i class="bi bi-shield-check"></i></span>
+        <div>
+          <div class="fw-semibold text-dark"><%= t('roles.admin') %></div>
+          <div class="small text-muted"><%= t('auth.adminRoleDesc') %></div>
+        </div>
+      </button>
+    </div>
+    <button type="button" class="hms-btn-primary w-100" id="loginNext1"><%= t('auth.nextStep') %> <i class="bi bi-arrow-right"></i></button>
+  </div>
+
+  <!-- Login Step 2: Identifier -->
+  <div data-login-step="2" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+      <div class="hms-meta-line">
+        <span><%= t('auth.stepProfile') %>:</span>
+        <strong class="text-dark" id="loginRoleSummary1"></strong>
+      </div>
+      <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="loginBackTo1From2"><%= t('auth.changeRole') %></button>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="loginUsername" id="loginUsernameLabel"><%= t('home.email') %></label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+        <input type="text" class="form-control" id="loginUsername" name="username" autocomplete="username">
+      </div>
+      <div class="mt-2 d-flex justify-content-between align-items-center">
+        <span class="small text-muted tabular" id="loginDemoHint"></span>
+        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="fillDemoBtn"><%= t('auth.fillDemo') %></button>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="button" class="hms-btn-secondary flex-fill" id="loginPrev2"><i class="bi bi-arrow-left"></i> <%= t('auth.prevStep') %></button>
+      <button type="button" class="hms-btn-primary flex-fill" id="loginNext2"><%= t('auth.nextStep') %> <i class="bi bi-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- Login Step 3: Password & Submit -->
+  <div data-login-step="3" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+      <div class="hms-meta-line">
+        <strong class="text-dark" id="loginRoleSummary2"></strong>
+        <span aria-hidden="true">·</span>
+        <span id="loginUserSummary"></span>
+      </div>
+      <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="loginBackTo2From3"><%= t('auth.changeRole') %></button>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="loginPassword"><%= t('auth.password') %></label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+        <input type="password" class="form-control" id="loginPassword" name="password" autocomplete="current-password">
+        <button class="btn btn-outline-secondary" type="button" id="toggleLoginPass" aria-label="Show password"><i class="bi bi-eye"></i></button>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="button" class="hms-btn-secondary flex-fill" id="loginPrev3"><i class="bi bi-arrow-left"></i> <%= t('auth.prevStep') %></button>
+      <button type="submit" class="hms-btn-primary flex-fill"><i class="bi bi-box-arrow-in-right"></i> <%= t('auth.loginBtn') %></button>
+    </div>
+  </div>
+</form>
+
+<!-- ==================== UNIFIED MULTI-STEP REGISTRATION ==================== -->
+<form method="post" action="/hms/auth/register" id="registerWizard" class="<%= initialMode === 'register' ? '' : 'd-none' %>" novalidate>
+  <input type="hidden" name="role" id="regRoleInput" value="<%= initialRole %>">
+
+  <div class="hms-stepper" aria-label="Registration Steps">
+    <div class="hms-step-item" data-reg-step-ind="1"><span class="hms-step-num">1</span><span><%= t('auth.stepProfile') %></span></div>
+    <div class="hms-step-item" data-reg-step-ind="2"><span class="hms-step-num">2</span><span><%= t('auth.stepDetails') %></span></div>
+    <div class="hms-step-item" data-reg-step-ind="3"><span class="hms-step-num">3</span><span><%= t('auth.stepCredentials') %></span></div>
+  </div>
+
+  <!-- Register Step 1: Role + Primary Identity -->
+  <div data-reg-step="1">
+    <div class="d-grid gap-2 mb-3">
+      <button type="button" class="hms-role-option" data-role-pick="patient" data-target="register">
+        <span class="hms-role-icon"><i class="bi bi-person"></i></span>
+        <div>
+          <div class="fw-semibold text-dark"><%= t('roles.patient') %></div>
+          <div class="small text-muted"><%= t('auth.patientRoleDesc') %></div>
+        </div>
+      </button>
+      <button type="button" class="hms-role-option" data-role-pick="doctor" data-target="register">
+        <span class="hms-role-icon"><i class="bi bi-heart-pulse"></i></span>
+        <div>
+          <div class="fw-semibold text-dark"><%= t('roles.doctor') %></div>
+          <div class="small text-muted"><%= t('auth.doctorRoleDesc') %></div>
+        </div>
+      </button>
+      <button type="button" class="hms-role-option" data-role-pick="admin" data-target="register">
+        <span class="hms-role-icon"><i class="bi bi-shield-check"></i></span>
+        <div>
+          <div class="fw-semibold text-dark"><%= t('roles.admin') %></div>
+          <div class="small text-muted"><%= t('auth.adminRoleDesc') %></div>
+        </div>
+      </button>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label" id="regFullNameLabel"><%= t('home.fullName') %></label>
+      <input type="text" class="form-control" name="full_name" id="regFullName">
+    </div>
+    <div class="mb-3" id="regEmailGroup">
+      <label class="form-label"><%= t('home.email') %></label>
+      <input type="email" class="form-control" name="email" id="regEmail">
+    </div>
+    <div class="mb-3 d-none" id="regUsernameGroup">
+      <label class="form-label"><%= t('auth.username') %></label>
+      <input type="text" class="form-control" name="username" id="regUsername">
+    </div>
+
+    <button type="button" class="hms-btn-primary w-100" id="regNext1"><%= t('auth.nextStep') %> <i class="bi bi-arrow-right"></i></button>
+  </div>
+
+  <!-- Register Step 2: Role-Specific Details -->
+  <div data-reg-step="2" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+      <div class="hms-meta-line">
+        <span><%= t('auth.stepProfile') %>:</span>
+        <strong class="text-dark" id="regRoleSummary1"></strong>
+      </div>
+      <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="regBackTo1From2"><%= t('auth.changeRole') %></button>
+    </div>
+
+    <!-- Patient details -->
+    <div data-reg-role-fields="patient">
+      <div class="row g-2 mb-2">
+        <div class="col-7">
+          <label class="form-label"><%= t('auth.city') %></label>
+          <input type="text" class="form-control" name="city" id="regCity">
+        </div>
+        <div class="col-5">
+          <label class="form-label"><%= t('auth.gender') %></label>
+          <select class="form-select" name="gender" id="regGender">
+            <option value="male"><%= t('auth.male') %></option>
+            <option value="female"><%= t('auth.female') %></option>
+          </select>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label"><%= t('home.addressLabel') %></label>
+        <input type="text" class="form-control" name="address" id="regAddress">
+      </div>
+    </div>
+
+    <!-- Doctor details -->
+    <div data-reg-role-fields="doctor" class="d-none">
+      <div class="mb-2">
+        <label class="form-label"><%= t('common.specialty') %></label>
+        <select class="form-select" name="specialization" id="regSpec">
+          <% specializations.forEach(function(s) { %>
+            <option value="<%= s.specilization %>"><%= s.specilization %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="row g-2 mb-2">
+        <div class="col-6">
+          <label class="form-label"><%= t('home.phone') %></label>
+          <input type="text" class="form-control" name="doccontact" id="regDocContact">
+        </div>
+        <div class="col-6">
+          <label class="form-label"><%= lang === 'pt' ? 'Valor Consulta (R$)' : 'Consultation Fee' %></label>
+          <input type="number" min="0" step="1" class="form-control" name="docfees" id="regDocFees" value="500">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label"><%= t('home.addressLabel') %></label>
+        <input type="text" class="form-control" name="clinicaddress" id="regClinicAddr">
+      </div>
+    </div>
+
+    <!-- Admin details -->
+    <div data-reg-role-fields="admin" class="d-none">
+      <div class="mb-2">
+        <label class="form-label"><%= t('auth.department') %></label>
+        <input type="text" class="form-control" name="department" id="regDepartment" placeholder="<%= lang === 'pt' ? 'Diretoria / Recepção / Farmácia' : 'Administration / Reception / Pharmacy' %>">
+      </div>
+      <div class="mb-3">
+        <label class="form-label"><%= t('home.phone') %></label>
+        <input type="text" class="form-control" name="admin_phone" id="regAdminPhone">
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="button" class="hms-btn-secondary flex-fill" id="regPrev2"><i class="bi bi-arrow-left"></i> <%= t('auth.prevStep') %></button>
+      <button type="button" class="hms-btn-primary flex-fill" id="regNext2"><%= t('auth.nextStep') %> <i class="bi bi-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- Register Step 3: Password & Confirm -->
+  <div data-reg-step="3" class="d-none">
+    <div class="hms-surface-card p-3 mb-3" style="background: #f8fafc;">
+      <div class="hms-meta-line mb-1">
+        <strong class="text-dark" id="regRoleSummary2"></strong>
+        <span aria-hidden="true">·</span>
+        <span id="regNameSummary"></span>
+      </div>
+      <div class="small text-muted" id="regIdentifierSummary"></div>
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-sm-6">
+        <label class="form-label" for="regPass"><%= t('auth.password') %></label>
+        <input type="password" class="form-control" name="password" id="regPass" minlength="6" autocomplete="new-password">
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label" for="regPassConfirm"><%= t('auth.confirmPassword') %></label>
+        <input type="password" class="form-control" name="password_again" id="regPassConfirm" minlength="6" autocomplete="new-password">
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="button" class="hms-btn-secondary flex-fill" id="regPrev3"><i class="bi bi-arrow-left"></i> <%= t('auth.prevStep') %></button>
+      <button type="submit" class="hms-btn-primary flex-fill"><i class="bi bi-check2-circle"></i> <%= t('auth.registerBtn') %></button>
+    </div>
+  </div>
+</form>
+
+<div class="text-center small mt-3 pt-2 border-top">
+  <a href="/" class="text-muted text-decoration-none"><%= t('backToSite') %></a>
+</div>
+
+<script>
+(function () {
+  var lang = <%= JSON.stringify(lang) %>;
+  var roleNames = {
+    patient: <%= JSON.stringify(t('roles.patient')) %>,
+    doctor: <%= JSON.stringify(t('roles.doctor')) %>,
+    admin: <%= JSON.stringify(t('roles.admin')) %>
+  };
+  var demoCreds = {
+    patient: { user: 'johndoe12@test.com', pass: 'Test@123' },
+    doctor: { user: 'anujk123@test.com', pass: 'Test@123' },
+    admin: { user: 'admin', pass: 'Test@12345' }
+  };
+  var msgs = {
+    needIdentifier: lang === 'pt' ? 'Informe seu e-mail ou usuário para continuar.' : 'Please enter your email or username to continue.',
+    needPassword: lang === 'pt' ? 'Informe sua senha.' : 'Please enter your password.',
+    needNameEmail: lang === 'pt' ? 'Informe seu nome e e-mail válidos.' : 'Please enter your full name and a valid email.',
+    needAdminUser: lang === 'pt' ? 'Informe seu nome e nome de usuário.' : 'Please enter your full name and username.',
+    needDetails: lang === 'pt' ? 'Preencha os campos desta etapa para continuar.' : 'Please complete the required fields in this step.',
+    passMismatch: lang === 'pt' ? 'As senhas devem coincidir e ter pelo menos 6 caracteres.' : 'Passwords must match and be at least 6 characters.'
+  };
+
+  var errorBox = document.getElementById('stepErrorBox');
+  function showError(msg) {
+    if (!msg) {
+      errorBox.classList.add('d-none');
+      errorBox.textContent = '';
+    } else {
+      errorBox.textContent = msg;
+      errorBox.classList.remove('d-none');
+    }
+  }
+
+  // Mode switching (Login vs Register)
+  var tabLogin = document.getElementById('tabLogin');
+  var tabRegister = document.getElementById('tabRegister');
+  var loginWizard = document.getElementById('loginWizard');
+  var registerWizard = document.getElementById('registerWizard');
+
+  function setMode(mode) {
+    showError('');
+    if (mode === 'register') {
+      tabRegister.classList.add('active');
+      tabLogin.classList.remove('active');
+      loginWizard.classList.add('d-none');
+      registerWizard.classList.remove('d-none');
+    } else {
+      tabLogin.classList.add('active');
+      tabRegister.classList.remove('active');
+      registerWizard.classList.add('d-none');
+      loginWizard.classList.remove('d-none');
+    }
+  }
+  tabLogin.addEventListener('click', function (e) { e.preventDefault(); setMode('login'); });
+  tabRegister.addEventListener('click', function (e) { e.preventDefault(); setMode('register'); });
+
+  // Login Stepper State
+  var loginRoleInput = document.getElementById('loginRoleInput');
+  var loginUsername = document.getElementById('loginUsername');
+  var loginPassword = document.getElementById('loginPassword');
+  var loginUsernameLabel = document.getElementById('loginUsernameLabel');
+  var loginDemoHint = document.getElementById('loginDemoHint');
+  var loginStep = 1;
+
+  function selectLoginRole(role) {
+    loginRoleInput.value = role;
+    document.querySelectorAll('[data-role-pick][data-target="login"]').forEach(function (btn) {
+      btn.classList.toggle('selected', btn.getAttribute('data-role-pick') === role);
+    });
+    if (role === 'admin') {
+      loginUsernameLabel.textContent = <%= JSON.stringify(t('auth.username')) %>;
+      loginUsername.type = 'text';
+      loginUsername.placeholder = 'admin';
+    } else {
+      loginUsernameLabel.textContent = <%= JSON.stringify(t('home.email')) %>;
+      loginUsername.type = 'email';
+      loginUsername.placeholder = demoCreds[role].user;
+    }
+    loginDemoHint.textContent = demoCreds[role].user + ' / ' + demoCreds[role].pass;
+    document.getElementById('loginRoleSummary1').textContent = roleNames[role];
+    document.getElementById('loginRoleSummary2').textContent = roleNames[role];
+  }
+
+  function showLoginStep(step) {
+    showError('');
+    loginStep = step;
+    document.querySelectorAll('[data-login-step]').forEach(function (el) {
+      el.classList.toggle('d-none', Number(el.getAttribute('data-login-step')) !== step);
+    });
+    document.querySelectorAll('[data-login-step-ind]').forEach(function (ind) {
+      var n = Number(ind.getAttribute('data-login-step-ind'));
+      ind.classList.toggle('active', n === step);
+      ind.classList.toggle('done', n < step);
+    });
+    if (step === 2) loginUsername.focus();
+    if (step === 3) {
+      document.getElementById('loginUserSummary').textContent = loginUsername.value.trim();
+      loginPassword.focus();
+    }
+  }
+
+  document.querySelectorAll('[data-role-pick][data-target="login"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      selectLoginRole(btn.getAttribute('data-role-pick'));
+    });
+  });
+  document.getElementById('loginNext1').addEventListener('click', function () { showLoginStep(2); });
+  document.getElementById('loginPrev2').addEventListener('click', function () { showLoginStep(1); });
+  document.getElementById('loginBackTo1From2').addEventListener('click', function () { showLoginStep(1); });
+  document.getElementById('loginNext2').addEventListener('click', function () {
+    if (!loginUsername.value.trim()) { showError(msgs.needIdentifier); loginUsername.focus(); return; }
+    showLoginStep(3);
+  });
+  document.getElementById('loginPrev3').addEventListener('click', function () { showLoginStep(2); });
+  document.getElementById('loginBackTo2From3').addEventListener('click', function () { showLoginStep(2); });
+  document.getElementById('fillDemoBtn').addEventListener('click', function () {
+    var r = loginRoleInput.value || 'patient';
+    loginUsername.value = demoCreds[r].user;
+    loginPassword.value = demoCreds[r].pass;
+    showLoginStep(3);
+  });
+  document.getElementById('toggleLoginPass').addEventListener('click', function () {
+    var isPass = loginPassword.type === 'password';
+    loginPassword.type = isPass ? 'text' : 'password';
+    this.innerHTML = isPass ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+  });
+  loginWizard.addEventListener('submit', function (e) {
+    if (loginStep < 3) {
+      e.preventDefault();
+      if (loginStep === 1) showLoginStep(2);
+      else if (!loginUsername.value.trim()) showError(msgs.needIdentifier);
+      else showLoginStep(3);
+      return;
+    }
+    if (!loginPassword.value) {
+      e.preventDefault();
+      showError(msgs.needPassword);
+      loginPassword.focus();
+    }
+  });
+
+  // Register Stepper State
+  var regRoleInput = document.getElementById('regRoleInput');
+  var regFullName = document.getElementById('regFullName');
+  var regEmail = document.getElementById('regEmail');
+  var regUsername = document.getElementById('regUsername');
+  var regEmailGroup = document.getElementById('regEmailGroup');
+  var regUsernameGroup = document.getElementById('regUsernameGroup');
+  var regPass = document.getElementById('regPass');
+  var regPassConfirm = document.getElementById('regPassConfirm');
+  var regStep = 1;
+
+  function selectRegRole(role) {
+    regRoleInput.value = role;
+    document.querySelectorAll('[data-role-pick][data-target="register"]').forEach(function (btn) {
+      btn.classList.toggle('selected', btn.getAttribute('data-role-pick') === role);
+    });
+    if (role === 'admin') {
+      regEmailGroup.classList.add('d-none');
+      regUsernameGroup.classList.remove('d-none');
+    } else {
+      regEmailGroup.classList.remove('d-none');
+      regUsernameGroup.classList.add('d-none');
+    }
+    document.querySelectorAll('[data-reg-role-fields]').forEach(function (panel) {
+      panel.classList.toggle('d-none', panel.getAttribute('data-reg-role-fields') !== role);
+    });
+    document.getElementById('regRoleSummary1').textContent = roleNames[role];
+    document.getElementById('regRoleSummary2').textContent = roleNames[role];
+  }
+
+  function showRegStep(step) {
+    showError('');
+    regStep = step;
+    document.querySelectorAll('[data-reg-step]').forEach(function (el) {
+      el.classList.toggle('d-none', Number(el.getAttribute('data-reg-step')) !== step);
+    });
+    document.querySelectorAll('[data-reg-step-ind]').forEach(function (ind) {
+      var n = Number(ind.getAttribute('data-reg-step-ind'));
+      ind.classList.toggle('active', n === step);
+      ind.classList.toggle('done', n < step);
+    });
+    if (step === 3) {
+      var r = regRoleInput.value;
+      document.getElementById('regNameSummary').textContent = regFullName.value.trim();
+      document.getElementById('regIdentifierSummary').textContent = r === 'admin' ? regUsername.value.trim() : regEmail.value.trim();
+      regPass.focus();
+    }
+  }
+
+  document.querySelectorAll('[data-role-pick][data-target="register"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      selectRegRole(btn.getAttribute('data-role-pick'));
+    });
+  });
+  document.getElementById('regNext1').addEventListener('click', function () {
+    var r = regRoleInput.value;
+    if (r === 'admin') {
+      if (!regFullName.value.trim() || !regUsername.value.trim()) { showError(msgs.needAdminUser); return; }
+    } else {
+      if (!regFullName.value.trim() || !regEmail.value.trim() || regEmail.value.indexOf('@') === -1) { showError(msgs.needNameEmail); return; }
+    }
+    showRegStep(2);
+  });
+  document.getElementById('regPrev2').addEventListener('click', function () { showRegStep(1); });
+  document.getElementById('regBackTo1From2').addEventListener('click', function () { showRegStep(1); });
+  document.getElementById('regNext2').addEventListener('click', function () {
+    var r = regRoleInput.value;
+    if (r === 'patient') {
+      if (!document.getElementById('regCity').value.trim() || !document.getElementById('regAddress').value.trim()) { showError(msgs.needDetails); return; }
+    } else if (r === 'doctor') {
+      if (!document.getElementById('regDocContact').value.trim() || !document.getElementById('regClinicAddr').value.trim()) { showError(msgs.needDetails); return; }
+    } else if (r === 'admin') {
+      if (!document.getElementById('regDepartment').value.trim()) { showError(msgs.needDetails); return; }
+    }
+    showRegStep(3);
+  });
+  document.getElementById('regPrev3').addEventListener('click', function () { showRegStep(2); });
+
+  registerWizard.addEventListener('submit', function (e) {
+    if (regStep < 3) {
+      e.preventDefault();
+      if (regStep === 1) document.getElementById('regNext1').click();
+      else document.getElementById('regNext2').click();
+      return;
+    }
+    if (regPass.value.length < 6 || regPass.value !== regPassConfirm.value) {
+      e.preventDefault();
+      showError(msgs.passMismatch);
+      regPass.focus();
+    }
+  });
+
+  // Init defaults
+  selectLoginRole(<%= JSON.stringify(initialRole) %>);
+  selectRegRole(<%= JSON.stringify(initialRole) %>);
+  showLoginStep(1);
+  showRegStep(1);
+})();
+</script>
+<%- include('../partials/auth-footer') %>

@@ -1,74 +1,74 @@
-<%- include('../partials/layout-header', { title: 'Book Appointment', role: 'patient', active: 'book' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.bookAppointment'), role: 'patient', active: 'book' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Book Appointment</h1>
-    <div class="text-muted">Choose a doctor, review availability, and submit a pending appointment request.</div>
+    <h1><%= t('sidebar.bookAppointment') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Escolha a especialidade, consulte os horários disponíveis e envie sua solicitação.' : 'Choose a specialist, review schedule availability, and submit an appointment request.' %></div>
   </div>
-  <a class="btn btn-outline-secondary" href="/hms/appointment-history.php"><i class="bi bi-calendar-check me-1"></i>My Appointments</a>
+  <a class="hms-btn-secondary" href="/hms/appointment-history.php"><i class="bi bi-calendar-check"></i><%= t('sidebar.myAppointments') %></a>
 </div>
 
-<div class="row g-3">
+<div class="row g-4">
   <div class="col-lg-7">
-    <div class="hms-card p-3">
+    <div class="hms-surface-card p-3">
       <form method="post" action="/hms/book-appointment.php" id="bookingForm">
         <div class="mb-3">
-          <label class="form-label">Doctor Specialization</label>
+          <label class="form-label"><%= t('common.specialty') %></label>
           <select class="form-select" name="Doctorspecialization" id="specialization" required>
-            <option value="">Select specialization</option>
+            <option value=""><%= lang === 'pt' ? 'Selecione a especialidade' : 'Select specialization' %></option>
             <% specialties.forEach(function(s) { %>
               <option value="<%= s.specilization %>"><%= s.specilization %></option>
             <% }); %>
           </select>
         </div>
         <div class="mb-3">
-          <label class="form-label">Doctor</label>
+          <label class="form-label"><%= t('common.doctor') %></label>
           <select class="form-select" name="doctor" id="doctor" required>
-            <option value="">Select doctor</option>
+            <option value=""><%= lang === 'pt' ? 'Selecione o médico' : 'Select doctor' %></option>
             <% doctors.forEach(function(doctor) { %>
               <option value="<%= doctor.id %>" data-specialization="<%= doctor.specilization %>" data-fee="<%= doctor.docFees %>" data-availability="<%= doctor.availabilitySummary %>">
                 <%= doctor.doctorName %> (<%= doctor.specilization %>)
               </option>
             <% }); %>
           </select>
-          <div class="form-text" id="availabilityText">Select a doctor to view availability.</div>
+          <div class="form-text" id="availabilityText"><%= lang === 'pt' ? 'Selecione um médico para visualizar os horários.' : 'Select a physician to view availability.' %></div>
         </div>
         <div class="mb-3">
-          <label class="form-label">Consultancy Fee</label>
-          <input class="form-control" id="fees" value="" readonly>
+          <label class="form-label"><%= lang === 'pt' ? 'Valor da Consulta (R$)' : 'Consultancy Fee' %></label>
+          <input class="form-control tabular" id="fees" value="" readonly>
         </div>
         <div class="row g-3">
           <div class="col-sm-6">
-            <label class="form-label">Appointment Date</label>
+            <label class="form-label"><%= t('common.date') %></label>
             <input class="form-control" type="date" name="appdate" min="<%= today %>" required>
           </div>
           <div class="col-sm-6">
-            <label class="form-label">Appointment Time</label>
+            <label class="form-label"><%= t('common.time') %></label>
             <input class="form-control" type="time" name="apptime" required>
           </div>
         </div>
         <div class="d-flex justify-content-end gap-2 mt-4">
-          <a class="btn btn-light" href="/hms/dashboard.php">Cancel</a>
-          <button class="btn btn-primary" type="submit"><i class="bi bi-send me-1"></i>Submit Request</button>
+          <a class="hms-btn-secondary" href="/hms/dashboard.php"><%= t('common.cancel') %></a>
+          <button class="hms-btn-primary" type="submit"><i class="bi bi-send"></i><%= lang === 'pt' ? 'Confirmar Solicitação' : 'Submit Request' %></button>
         </div>
       </form>
     </div>
   </div>
   <div class="col-lg-5">
-    <div class="hms-card p-3 h-100">
-      <h2 class="h5">Before Booking</h2>
-      <div class="text-muted mb-3">Availability is checked again when you submit, so another patient cannot take the same slot silently.</div>
-      <div class="timeline">
-        <div class="timeline-item">
-          <div class="fw-semibold">Pending</div>
-          <div class="small text-muted">New requests start here.</div>
+    <div class="hms-surface-card p-3 h-100">
+      <h2 class="h5 mb-2"><%= lang === 'pt' ? 'Fluxo de Atendimento' : 'Appointment Workflow' %></h2>
+      <div class="text-muted small mb-3"><%= lang === 'pt' ? 'A disponibilidade é validada no envio para evitar conflitos de horário.' : 'Availability is verified on submission to prevent double-booking.' %></div>
+      <div class="hms-timeline">
+        <div class="hms-timeline-item">
+          <div class="fw-semibold"><%= t('status.Pending') %></div>
+          <div class="small text-muted"><%= lang === 'pt' ? 'Solicitação enviada para conferência da recepção ou médico.' : 'Request awaiting clinical or reception confirmation.' %></div>
         </div>
-        <div class="timeline-item">
-          <div class="fw-semibold">Approved</div>
-          <div class="small text-muted">Admin or doctor confirms the visit.</div>
+        <div class="hms-timeline-item">
+          <div class="fw-semibold"><%= t('status.Approved') %></div>
+          <div class="small text-muted"><%= lang === 'pt' ? 'Horário reservado e confirmado no ambulatório.' : 'Visit confirmed on the clinic schedule.' %></div>
         </div>
-        <div class="timeline-item">
-          <div class="fw-semibold">Completed</div>
-          <div class="small text-muted">Doctor adds diagnosis and prescription.</div>
+        <div class="hms-timeline-item">
+          <div class="fw-semibold"><%= t('status.Completed') %></div>
+          <div class="small text-muted"><%= lang === 'pt' ? 'Consulta realizada com receita e pedidos de exame disponíveis.' : 'Visit finished with prescription and diagnostic records ready.' %></div>
         </div>
       </div>
     </div>
@@ -80,12 +80,13 @@ var doctor = document.getElementById("doctor");
 var fee = document.getElementById("fees");
 var availability = document.getElementById("availabilityText");
 var allOptions = Array.from(doctor.querySelectorAll("option")).slice(1);
+var defaultAvail = ${JSON.stringify(lang === 'pt' ? 'Selecione um médico para visualizar os horários.' : 'Select a physician to view availability.')};
 
 function filterDoctors() {
   var selected = specialization.value;
   doctor.value = "";
   fee.value = "";
-  availability.textContent = "Select a doctor to view availability.";
+  availability.textContent = defaultAvail;
   allOptions.forEach(function(option) {
     option.hidden = selected && option.dataset.specialization !== selected;
   });
@@ -93,7 +94,7 @@ function filterDoctors() {
 function updateDoctorMeta() {
   var option = doctor.options[doctor.selectedIndex];
   fee.value = option && option.dataset.fee ? option.dataset.fee : "";
-  availability.textContent = option && option.dataset.availability ? option.dataset.availability : "Select a doctor to view availability.";
+  availability.textContent = option && option.dataset.availability ? option.dataset.availability : defaultAvail;
 }
 specialization.addEventListener("change", filterDoctors);
 doctor.addEventListener("change", updateDoctorMeta);

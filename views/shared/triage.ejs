@@ -1,0 +1,135 @@
+<%- include('../partials/layout-header', { title: t('sidebar.triage'), role: role, active: 'triage' }) %>
+<div class="hms-page-header">
+  <div>
+    <h1><%= t('sidebar.triage') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Classificação de risco clínico, sinais vitais e fila de pronto-socorro.' : 'Emergency acuity classification, vitals capture, and clinical intake queue.' %></div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Registrar Triagem' : 'New Triage Intake' %></h2>
+      <form method="post" action="<%= actionUrl %>">
+        <input type="hidden" name="action" value="create">
+        <div class="mb-2">
+          <label class="form-label"><%= t('common.patient') %></label>
+          <input class="form-control" name="patientName" required>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-4">
+            <label class="form-label"><%= lang === 'pt' ? 'Idade' : 'Age' %></label>
+            <input type="number" class="form-control" name="age" min="0" max="120" required>
+          </div>
+          <div class="col-8">
+            <label class="form-label"><%= lang === 'pt' ? 'Classificação (Manchester)' : 'Acuity Priority' %></label>
+            <select class="form-select" name="priority">
+              <option value="Emergency"><%= t('status.Emergency') %></option>
+              <option value="Very Urgent"><%= t('status.Very Urgent') %></option>
+              <option value="Urgent" selected><%= t('status.Urgent') %></option>
+              <option value="Standard"><%= t('status.Standard') %></option>
+            </select>
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label"><%= lang === 'pt' ? 'Sinais Vitais (PA, FC, SpO2, Temp)' : 'Vitals (BP, HR, SpO2, Temp)' %></label>
+          <input class="form-control" name="vitals" placeholder="BP 120/80 · HR 82 · SpO2 98% · 37.2°C" required>
+        </div>
+        <div class="mb-2">
+          <label class="form-label"><%= lang === 'pt' ? 'Queixa Principal' : 'Chief Complaint' %></label>
+          <textarea class="form-control" name="complaint" rows="2" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label"><%= t('common.doctor') %></label>
+          <select class="form-select" name="doctorId">
+            <option value=""><%= lang === 'pt' ? 'Plantão / A definir' : 'On-call / Unassigned' %></option>
+            <% doctors.forEach(function(d) { %>
+              <option value="<%= d.id %>"><%= d.doctorName %> (<%= d.specilization %>)</option>
+            <% }); %>
+          </select>
+        </div>
+        <button class="hms-btn-primary w-100" type="submit"><%= lang === 'pt' ? 'Adicionar à Fila' : 'Add to Queue' %></button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="hms-surface-card p-3">
+      <form class="row g-2 align-items-end mb-3" method="get" action="<%= actionUrl %>">
+        <div class="col-sm-4">
+          <label class="form-label small text-muted mb-1"><%= lang === 'pt' ? 'Prioridade' : 'Priority' %></label>
+          <select class="form-select form-select-sm" name="priority">
+            <option value=""><%= t('common.all') %></option>
+            <% ['Emergency', 'Very Urgent', 'Urgent', 'Standard'].forEach(function(p) { %>
+              <option value="<%= p %>" <%= priorityFilter === p ? 'selected' : '' %>><%= t('status.' + p) %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label small text-muted mb-1"><%= t('common.status') %></label>
+          <select class="form-select form-select-sm" name="status">
+            <option value=""><%= t('common.all') %></option>
+            <% ['Waiting', 'In Consultation', 'Admitted', 'Discharged'].forEach(function(s) { %>
+              <option value="<%= s %>" <%= statusFilter === s ? 'selected' : '' %>><%= t('status.' + s) %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="col-sm-4 d-flex gap-2">
+          <button class="btn btn-sm btn-primary" type="submit"><%= t('common.filter') %></button>
+          <a class="btn btn-sm btn-outline-secondary" href="<%= actionUrl %>"><%= lang === 'pt' ? 'Limpar' : 'Reset' %></a>
+        </div>
+      </form>
+
+      <div class="table-responsive">
+        <table class="hms-table" data-sortable>
+          <thead>
+          <tr>
+            <th data-sort><%= lang === 'pt' ? 'Prioridade' : 'Priority' %></th>
+            <th data-sort><%= t('common.patient') %></th>
+            <th><%= lang === 'pt' ? 'Sinais & Queixa' : 'Vitals & Complaint' %></th>
+            <th data-sort><%= t('common.status') %></th>
+            <th class="text-end"><%= t('common.actions') %></th>
+          </tr>
+          </thead>
+          <tbody>
+          <% queue.forEach(function(item) { %>
+            <tr>
+              <td><%- statusBadge(item.priority) %></td>
+              <td>
+                <div class="fw-semibold"><%= item.patientName %></div>
+                <div class="hms-meta-line">
+                  <span class="tabular"><%= item.age %> <%= lang === 'pt' ? 'anos' : 'yrs' %></span>
+                  <span aria-hidden="true">·</span>
+                  <span class="tabular"><%= item.arrivedAt %></span>
+                </div>
+              </td>
+              <td>
+                <div class="small fw-semibold"><%= item.complaint %></div>
+                <div class="small text-muted tabular"><%= item.vitals %></div>
+                <div class="small text-muted"><%= t('common.doctor') %>: <%= item.doctorName %></div>
+              </td>
+              <td><%- statusBadge(item.status) %></td>
+              <td class="text-end">
+                <form method="post" action="<%= actionUrl %>" class="d-inline-flex gap-1 align-items-center">
+                  <input type="hidden" name="action" value="update_status">
+                  <input type="hidden" name="id" value="<%= item.id %>">
+                  <select class="form-select form-select-sm" name="status" style="width:auto">
+                    <% ['Waiting', 'In Consultation', 'Admitted', 'Discharged'].forEach(function(s) { %>
+                      <option value="<%= s %>" <%= item.status === s ? 'selected' : '' %>><%= t('status.' + s) %></option>
+                    <% }); %>
+                  </select>
+                  <button class="btn btn-sm btn-outline-primary" type="submit"><%= t('common.save') %></button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+          <% if (!queue.length) { %>
+            <tr><td colspan="5" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
+          <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

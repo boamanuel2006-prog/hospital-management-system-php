@@ -1,34 +1,34 @@
-<%- include('../partials/layout-header', { title: heading, role: 'admin', active: active }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: isContact ? t('sidebar.contactCms') : t('sidebar.aboutCms'), role: 'admin', active: active }) %>
+<div class="hms-page-header">
   <div>
-    <h1><%= heading %></h1>
-    <p class="text-muted mb-0"><%= subtitle %></p>
+    <h1><%= isContact ? t('sidebar.contactCms') : t('sidebar.aboutCms') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Atualize as informações institucionais exibidas no site público do hospital.' : subtitle %></div>
   </div>
 </div>
 
-<div class="hms-card p-4" style="max-width:760px">
+<div class="hms-surface-card p-4" style="max-width:760px">
   <form method="post" action="<%= actionUrl %>">
     <div class="mb-3">
-      <label class="form-label">Page title</label>
+      <label class="form-label"><%= lang === 'pt' ? 'Título da Seção' : 'Page title' %></label>
       <input type="text" class="form-control" name="pagetitle" value="<%= page ? page.PageTitle : '' %>" required>
     </div>
     <% if (isContact) { %>
       <div class="row g-3 mb-3">
         <div class="col-md-6">
-          <label class="form-label">Email address</label>
+          <label class="form-label"><%= t('home.email') %></label>
           <input type="email" class="form-control" name="email" value="<%= page ? page.Email : '' %>" required>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Mobile number</label>
+          <label class="form-label"><%= t('home.phone') %></label>
           <input type="text" class="form-control" name="mobnum" value="<%= page ? page.MobileNumber : '' %>" required>
         </div>
       </div>
     <% } %>
     <div class="mb-4">
-      <label class="form-label">Page description</label>
+      <label class="form-label"><%= lang === 'pt' ? 'Conteúdo / Descrição' : 'Page description' %></label>
       <textarea class="form-control" name="pagedes" rows="8" required><%= page ? page.PageDescription : '' %></textarea>
     </div>
-    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Save Content</button>
+    <button type="submit" class="hms-btn-primary"><i class="bi bi-save"></i><%= t('common.save') %></button>
   </form>
 </div>
 <%- include('../partials/layout-footer') %>

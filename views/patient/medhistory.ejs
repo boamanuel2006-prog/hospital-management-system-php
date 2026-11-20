@@ -1,52 +1,64 @@
-<%- include('../partials/layout-header', { title: 'Medical History', role: 'patient', active: 'medhistory' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.medHistory'), role: 'patient', active: 'medhistory' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Medical History &amp; Prescriptions</h1>
-    <div class="text-muted">Review your clinical records and issued prescriptions.</div>
+    <h1><%= t('sidebar.medHistory') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Consulte seu histórico clínico, sinais vitais e receitas emitidas.' : 'Review your clinical vitals records and issued prescriptions.' %></div>
   </div>
 </div>
 
-<div class="row g-3">
+<div class="row g-4">
   <div class="col-lg-6">
-    <div class="hms-card p-3 h-100">
-      <h2 class="h5 mb-3">Prescriptions</h2>
+    <div class="hms-surface-card p-3 h-100">
+      <h2 class="h5 mb-3"><%= t('sidebar.prescriptions') %></h2>
       <% if (prescriptions.length) { %>
-        <div class="timeline">
+        <div class="hms-timeline">
           <% prescriptions.forEach(function(p) { %>
-            <div class="timeline-item">
-              <div class="d-flex justify-content-between align-items-start">
+            <div class="hms-timeline-item">
+              <div class="d-flex justify-content-between align-items-start gap-2">
                 <div class="fw-semibold"><%= p.diagnosis %></div>
-                <a class="btn btn-sm btn-outline-success" href="/hms/prescription-download.php?id=<%= p.id %>"><i class="bi bi-download me-1"></i>View</a>
+                <a class="btn btn-sm btn-outline-primary" href="/hms/prescription-download.php?id=<%= p.id %>"><i class="bi bi-file-earmark-medical me-1"></i><%= t('common.view') %></a>
               </div>
-              <div class="small text-muted">Dr. <%= p.doctorName %> | <%= p.created_at %></div>
-              <div class="small mt-1"><strong>Medicines:</strong> <%= p.medicines %></div>
-              <div class="small"><strong>Treatment:</strong> <%= p.treatment %></div>
+              <div class="hms-meta-line mb-1">
+                <span>Dr. <%= p.doctorName %></span>
+                <span aria-hidden="true">·</span>
+                <span class="tabular"><%= p.created_at %></span>
+              </div>
+              <div class="small"><strong><%= lang === 'pt' ? 'Medicamentos' : 'Medicines' %>:</strong> <%= p.medicines %></div>
+              <div class="small"><strong><%= lang === 'pt' ? 'Tratamento' : 'Treatment' %>:</strong> <%= p.treatment %></div>
               <% if (p.followup_date) { %>
-                <div class="small text-muted">Follow-up: <%= p.followup_date %></div>
+                <div class="small text-muted tabular"><%= lang === 'pt' ? 'Retorno' : 'Follow-up' %>: <%= p.followup_date %></div>
               <% } %>
             </div>
           <% }); %>
         </div>
       <% } else { %>
-        <div class="text-muted">No prescriptions recorded yet.</div>
+        <div class="text-muted small"><%= t('common.noRecords') %></div>
       <% } %>
     </div>
   </div>
   <div class="col-lg-6">
-    <div class="hms-card p-3 h-100">
-      <h2 class="h5 mb-3">Clinical Vitals &amp; Notes</h2>
+    <div class="hms-surface-card p-3 h-100">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Sinais Vitais e Evolução Clínica' : 'Clinical Vitals & Notes' %></h2>
       <% if (history.length) { %>
-        <div class="timeline">
+        <div class="hms-timeline">
           <% history.forEach(function(item) { %>
-            <div class="timeline-item">
-              <div class="fw-semibold"><%= item.CreationDate %></div>
-              <div class="small text-muted">BP: <%= item.BloodPressure %> | Sugar: <%= item.BloodSugar %> | Weight: <%= item.Weight %> | Temp: <%= item.Temperature %></div>
-              <div class="small mt-1"><%= item.MedicalPres %></div>
+            <div class="hms-timeline-item">
+              <div class="fw-semibold tabular"><%= item.CreationDate %></div>
+              <div class="hms-meta-line mb-1 tabular">
+                <span>PA: <%= item.BloodPressure %></span>
+                <span aria-hidden="true">·</span>
+                <span><%= lang === 'pt' ? 'Glicemia' : 'Sugar' %>: <%= item.BloodSugar %></span>
+                <span aria-hidden="true">·</span>
+                <span><%= item.Weight %></span>
+                <span aria-hidden="true">·</span>
+                <span><%= item.Temperature %></span>
+              </div>
+              <div class="small"><%= item.MedicalPres %></div>
             </div>
           <% }); %>
         </div>
       <% } else { %>
-        <div class="text-muted">No clinical vitals recorded for your email yet.</div>
+        <div class="text-muted small"><%= t('common.noRecords') %></div>
       <% } %>
     </div>
   </div>

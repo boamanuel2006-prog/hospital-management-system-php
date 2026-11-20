@@ -1,82 +1,72 @@
-<%- include('../partials/layout-header', { title: 'Patient Dashboard', role: 'patient', active: 'dashboard' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.dashboard'), role: 'patient', active: 'dashboard' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Patient Dashboard</h1>
-    <div class="text-muted">Track appointments, prescriptions, and medical history.</div>
+    <h1><%= lang === 'pt' ? 'Painel do Paciente' : 'Patient Dashboard' %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Acompanhe consultas, resultados de exames, prescrições e guias financeiras.' : 'Track appointments, lab results, prescriptions, and billing receipts.' %></div>
   </div>
-  <a class="btn btn-primary" href="/hms/book-appointment.php"><i class="bi bi-calendar-plus me-1"></i>Book Appointment</a>
+  <a class="hms-btn-primary" href="/hms/book-appointment.php"><i class="bi bi-calendar-plus"></i><%= t('sidebar.bookAppointment') %></a>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-12 col-sm-6 col-xl-3">
-    <a class="hms-card hms-stat d-block text-reset" href="/hms/appointment-history.php">
-      <span class="icon"><i class="bi bi-calendar-check"></i></span>
-      <div class="value"><%= stats.appointments %></div>
-      <div class="label">Total Appointments</div>
-    </a>
-  </div>
-  <div class="col-12 col-sm-6 col-xl-3">
-    <div class="hms-card hms-stat">
-      <span class="icon"><i class="bi bi-hourglass-split"></i></span>
-      <div class="value"><%= stats.pending %></div>
-      <div class="label">Pending</div>
-    </div>
-  </div>
-  <div class="col-12 col-sm-6 col-xl-3">
-    <div class="hms-card hms-stat">
-      <span class="icon"><i class="bi bi-check2-circle"></i></span>
-      <div class="value"><%= stats.completed %></div>
-      <div class="label">Completed</div>
-    </div>
-  </div>
-  <div class="col-12 col-sm-6 col-xl-3">
-    <a class="hms-card hms-stat d-block text-reset" href="/hms/manage-medhistory.php">
-      <span class="icon"><i class="bi bi-journal-medical"></i></span>
-      <div class="value"><%= stats.history %></div>
-      <div class="label">Medical Records</div>
-    </a>
-  </div>
+<div class="hms-kpi-grid">
+  <a class="hms-kpi-card" href="/hms/appointment-history.php">
+    <div class="hms-kpi-label"><%= lang === 'pt' ? 'Consultas Agendadas' : 'Total Appointments' %></div>
+    <div class="hms-kpi-value"><%= stats.appointments %></div>
+    <div class="hms-kpi-foot tabular"><%= stats.pending %> <%= t('status.Pending') %> · <%= stats.completed %> <%= t('status.Completed') %></div>
+  </a>
+  <a class="hms-kpi-card" href="/hms/manage-medhistory.php">
+    <div class="hms-kpi-label"><%= lang === 'pt' ? 'Receitas e Prontuário' : 'Prescriptions & Records' %></div>
+    <div class="hms-kpi-value"><%= stats.prescriptions %></div>
+    <div class="hms-kpi-foot tabular"><%= stats.history %> <%= lang === 'pt' ? 'registros clínicos' : 'clinical entries' %></div>
+  </a>
+  <a class="hms-kpi-card" href="/hms/lab-results.php">
+    <div class="hms-kpi-label"><%= t('sidebar.myExams') %></div>
+    <div class="hms-kpi-value"><%= stats.labs %></div>
+    <div class="hms-kpi-foot"><%= lang === 'pt' ? 'Laboratório e imagem' : 'Diagnostic exams' %></div>
+  </a>
+  <a class="hms-kpi-card" href="/hms/invoices.php">
+    <div class="hms-kpi-label"><%= lang === 'pt' ? 'Guias em Aberto' : 'Unpaid Invoices' %></div>
+    <div class="hms-kpi-value"><%= stats.unpaidInvoices %></div>
+    <div class="hms-kpi-foot"><%= lang === 'pt' ? 'Faturamento hospitalar' : 'Hospital billing' %></div>
+  </a>
 </div>
 
-<div class="row g-3">
+<div class="row g-4">
   <div class="col-lg-5">
-    <div class="hms-card p-3 h-100">
-      <h2 class="h5 mb-3">Next Appointment</h2>
-      <% if (nextAppointment) { %>
-        <div class="d-flex align-items-start gap-3">
-          <div class="hms-stat p-0" style="min-height:auto">
-            <span class="icon"><i class="bi bi-calendar-event"></i></span>
+    <div class="hms-surface-card p-3 h-100 d-flex flex-column justify-content-between">
+      <div>
+        <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Próxima Consulta' : 'Next Appointment' %></h2>
+        <% if (nextAppointment) { %>
+          <div class="fw-semibold fs-6"><%= nextAppointment.doctorName %></div>
+          <div class="hms-meta-line mb-2">
+            <span><%= nextAppointment.doctorSpecialization %></span>
+            <span aria-hidden="true">·</span>
+            <span class="tabular"><%= nextAppointment.appointmentDate %> <%= nextAppointment.appointmentTime %></span>
           </div>
-          <div>
-            <div class="fw-semibold"><%= nextAppointment.doctorName %></div>
-            <div class="text-muted"><%= nextAppointment.doctorSpecialization %></div>
-            <div class="mt-2"><%= nextAppointment.appointmentDate %> at <%= nextAppointment.appointmentTime %></div>
-            <div class="mt-2"><%- statusBadge(nextAppointment.status) %></div>
-          </div>
-        </div>
-      <% } else { %>
-        <div class="text-muted">No upcoming appointment. You can book one when you are ready.</div>
-      <% } %>
-      <div class="mt-4 d-grid gap-2">
-        <a class="btn btn-outline-primary" href="/hms/appointment-history.php">Track Status</a>
-        <a class="btn btn-outline-secondary" href="/hms/manage-medhistory.php">Medical History Timeline</a>
+          <div><%- statusBadge(nextAppointment.status) %></div>
+        <% } else { %>
+          <div class="text-muted small"><%= lang === 'pt' ? 'Nenhuma consulta futura agendada no momento.' : 'No upcoming appointment scheduled.' %></div>
+        <% } %>
+      </div>
+      <div class="mt-4 d-flex flex-wrap gap-2">
+        <a class="hms-btn-secondary flex-fill" href="/hms/appointment-history.php"><%= t('sidebar.myAppointments') %></a>
+        <a class="hms-btn-secondary flex-fill" href="/hms/lab-results.php"><%= t('sidebar.myExams') %></a>
       </div>
     </div>
   </div>
   <div class="col-lg-7">
-    <div class="hms-card p-3">
+    <div class="hms-surface-card p-3">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="h5 mb-0">Recent Appointments</h2>
-        <span class="badge text-bg-light"><%= stats.prescriptions %> prescriptions</span>
+        <h2 class="h5 mb-0"><%= lang === 'pt' ? 'Consultas Recentes' : 'Recent Appointments' %></h2>
+        <span class="hms-meta-line"><strong class="tabular text-dark"><%= stats.prescriptions %></strong><span><%= t('sidebar.prescriptions') %></span></span>
       </div>
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" data-sortable>
+        <table class="hms-table" data-sortable>
           <thead>
           <tr>
-            <th data-sort>Doctor</th>
-            <th data-sort>Date</th>
-            <th data-sort>Status</th>
-            <th class="text-end">Fee</th>
+            <th data-sort><%= t('common.doctor') %></th>
+            <th data-sort><%= t('common.date') %></th>
+            <th data-sort><%= t('common.status') %></th>
+            <th class="text-end"><%= t('common.fee') %></th>
           </tr>
           </thead>
           <tbody>
@@ -86,13 +76,13 @@
                 <div class="fw-semibold"><%= appointment.doctorName %></div>
                 <div class="small text-muted"><%= appointment.doctorSpecialization %></div>
               </td>
-              <td><%= appointment.appointmentDate %> <%= appointment.appointmentTime %></td>
+              <td class="tabular"><%= appointment.appointmentDate %> <%= appointment.appointmentTime %></td>
               <td><%- statusBadge(appointment.status) %></td>
-              <td class="text-end"><%= appointment.consultancyFees %></td>
+              <td class="text-end tabular">R$ <%= appointment.consultancyFees %></td>
             </tr>
           <% }); %>
           <% if (!recentAppointments.length) { %>
-            <tr><td colspan="4" class="text-center text-muted py-4">No appointments found.</td></tr>
+            <tr><td colspan="4" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
           <% } %>
           </tbody>
         </table>

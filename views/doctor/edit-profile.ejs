@@ -1,15 +1,15 @@
-<%- include('../partials/layout-header', { title: 'Edit Doctor Profile', role: 'doctor', active: 'profile' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.profile'), role: 'doctor', active: 'profile' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>My Profile</h1>
-    <div class="text-muted">Update your specialization, clinic address, and consultancy fees.</div>
+    <h1><%= t('sidebar.profile') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Atualize especialidade, endereço de atendimento e valor de consulta.' : 'Update your specialization, clinic address, and consultancy fees.' %></div>
   </div>
 </div>
-<div class="hms-card p-4" style="max-width:720px">
+<div class="hms-surface-card p-4" style="max-width:720px">
   <form method="post" action="/hms/doctor/edit-profile.php">
     <div class="row g-3">
       <div class="col-md-6">
-        <label class="form-label">Specialization</label>
+        <label class="form-label"><%= t('common.specialty') %></label>
         <select class="form-select" name="Doctorspecialization" required>
           <% specializations.forEach(function(s) { %>
             <option value="<%= s.specilization %>" <%= doctor.specilization === s.specilization ? 'selected' : '' %>><%= s.specilization %></option>
@@ -17,27 +17,27 @@
         </select>
       </div>
       <div class="col-md-6">
-        <label class="form-label">Doctor Name</label>
+        <label class="form-label"><%= t('common.doctor') %></label>
         <input class="form-control" name="docname" value="<%= doctor.doctorName %>" required>
       </div>
       <div class="col-md-6">
-        <label class="form-label">Consultancy Fees</label>
+        <label class="form-label"><%= lang === 'pt' ? 'Valor da Consulta (R$)' : 'Consultancy Fees' %></label>
         <input type="number" class="form-control" name="docfees" value="<%= doctor.docFees %>" required>
       </div>
       <div class="col-md-6">
-        <label class="form-label">Contact Number</label>
+        <label class="form-label"><%= t('home.phone') %></label>
         <input class="form-control" name="doccontact" value="<%= doctor.contactno %>" required>
       </div>
       <div class="col-md-6">
-        <label class="form-label">Email</label>
+        <label class="form-label"><%= t('home.email') %></label>
         <input class="form-control" value="<%= doctor.docEmail %>" readonly>
       </div>
       <div class="col-12">
-        <label class="form-label">Clinic Address</label>
+        <label class="form-label"><%= t('home.addressLabel') %></label>
         <textarea class="form-control" name="clinicaddress" rows="3" required><%= doctor.address %></textarea>
       </div>
     </div>
-    <button class="btn btn-primary mt-3" type="submit">Update Profile</button>
+    <button class="hms-btn-primary mt-3" type="submit"><%= t('common.save') %></button>
   </form>
 </div>
 <%- include('../partials/layout-footer') %>

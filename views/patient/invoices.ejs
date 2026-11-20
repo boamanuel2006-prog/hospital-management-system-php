@@ -1,0 +1,61 @@
+<%- include('../partials/layout-header', { title: t('sidebar.myInvoices'), role: 'patient', active: 'invoices' }) %>
+<div class="hms-page-header">
+  <div>
+    <h1><%= t('sidebar.myInvoices') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Consulte guias hospitalares, taxas de consultas e comprovantes de pagamento.' : 'Inspect hospital billing receipts, consultation fees, and payment records.' %></div>
+  </div>
+</div>
+
+<div class="hms-surface-card p-3">
+  <div class="table-responsive">
+    <table class="hms-table" data-sortable>
+      <thead>
+      <tr>
+        <th data-sort>#</th>
+        <th data-sort><%= lang === 'pt' ? 'Descrição' : 'Description' %></th>
+        <th data-sort><%= lang === 'pt' ? 'Emissão' : 'Issued' %></th>
+        <th data-sort><%= lang === 'pt' ? 'Método' : 'Method' %></th>
+        <th data-sort class="text-end"><%= lang === 'pt' ? 'Valor (R$)' : 'Amount' %></th>
+        <th data-sort><%= t('common.status') %></th>
+        <th class="text-end"><%= t('common.actions') %></th>
+      </tr>
+      </thead>
+      <tbody>
+      <% invoices.forEach(function(inv) { %>
+        <tr>
+          <td class="tabular text-muted">#<%= inv.id %></td>
+          <td>
+            <div class="fw-semibold"><%= inv.description %></div>
+            <% if (inv.appointmentId) { %>
+              <div class="hms-meta-line"><span><%= lang === 'pt' ? 'Consulta' : 'Visit' %> #<%= inv.appointmentId %></span></div>
+            <% } %>
+          </td>
+          <td class="tabular"><%= inv.issuedAt %></td>
+          <td><%= inv.method %></td>
+          <td class="text-end tabular fw-semibold">R$ <%= Number(inv.amount).toFixed(2) %></td>
+          <td><%- statusBadge(inv.status) %></td>
+          <td class="text-end">
+            <% if (inv.status === 'Unpaid') { %>
+              <form method="post" action="/hms/invoices.php" class="d-inline-flex gap-2 align-items-center">
+                <input type="hidden" name="invoice_id" value="<%= inv.id %>">
+                <select name="method" class="form-select form-select-sm" style="width:auto">
+                  <option value="PIX">PIX</option>
+                  <option value="Card"><%= lang === 'pt' ? 'Cartão' : 'Card' %></option>
+                  <option value="Insurance / Convênio"><%= lang === 'pt' ? 'Convênio' : 'Insurance' %></option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary"><%= lang === 'pt' ? 'Quitar' : 'Pay' %></button>
+              </form>
+            <% } else { %>
+              <span class="small text-muted tabular"><%= inv.paidAt || '-' %></span>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!invoices.length) { %>
+        <tr><td colspan="7" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

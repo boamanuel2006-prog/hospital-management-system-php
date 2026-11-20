@@ -1,0 +1,128 @@
+<%- include('../partials/layout-header', { title: t('sidebar.billing'), role: 'admin', active: 'billing' }) %>
+<div class="hms-page-header">
+  <div>
+    <h1><%= t('sidebar.billing') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Emissão de guias hospitalares, controle de convênios e recebimentos de consultas e exames.' : 'Hospital billing receipts, insurance claims, and outpatient consultation settlement.' %></div>
+  </div>
+</div>
+
+<div class="hms-kpi-grid">
+  <div class="hms-kpi-card">
+    <div class="hms-kpi-label"><%= lang === 'pt' ? 'Total Recebido' : 'Total Settled' %></div>
+    <div class="hms-kpi-value" style="color: var(--hms-ok);">R$ <%= totalPaid.toFixed(2) %></div>
+  </div>
+  <div class="hms-kpi-card">
+    <div class="hms-kpi-label"><%= lang === 'pt' ? 'Em Aberto' : 'Outstanding' %></div>
+    <div class="hms-kpi-value" style="color: var(--hms-warn);">R$ <%= totalUnpaid.toFixed(2) %></div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Emitir Guia / Fatura' : 'Issue Hospital Invoice' %></h2>
+      <form method="post" action="/hms/admin/billing.php">
+        <input type="hidden" name="action" value="create">
+        <div class="mb-2">
+          <label class="form-label"><%= t('common.patient') %></label>
+          <select class="form-select" name="patientUserId" required>
+            <% users.forEach(function(u) { %>
+              <option value="<%= u.id %>"><%= u.fullName %> (<%= u.email %>)</option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label"><%= lang === 'pt' ? 'Consulta Vinculada (Opcional)' : 'Linked Appointment (Optional)' %></label>
+          <select class="form-select" name="appointmentId">
+            <option value=""><%= lang === 'pt' ? 'Avulsa / Sem vínculo' : 'Standalone / None' %></option>
+            <% appointments.forEach(function(a) { %>
+              <option value="<%= a.id %>">#<%= a.id %> - <%= a.fullName %> (<%= a.doctorName %>)</option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label"><%= lang === 'pt' ? 'Descrição dos Procedimentos' : 'Procedure Description' %></label>
+          <input class="form-control" name="description" required>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label"><%= lang === 'pt' ? 'Valor (R$)' : 'Amount' %></label>
+            <input type="number" step="0.01" min="1" class="form-control" name="amount" required>
+          </div>
+          <div class="col-6">
+            <label class="form-label"><%= lang === 'pt' ? 'Forma de Pgto' : 'Method' %></label>
+            <select class="form-select" name="method">
+              <option value="PIX">PIX</option>
+              <option value="Card"><%= lang === 'pt' ? 'Cartão' : 'Card' %></option>
+              <option value="Insurance / Convênio"><%= lang === 'pt' ? 'Convênio' : 'Insurance' %></option>
+              <option value="Cash"><%= lang === 'pt' ? 'Dinheiro' : 'Cash' %></option>
+            </select>
+          </div>
+        </div>
+        <button class="hms-btn-primary w-100" type="submit"><%= lang === 'pt' ? 'Emitir Guia' : 'Create Invoice' %></button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="hms-surface-card p-3">
+      <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h5 mb-0"><%= lang === 'pt' ? 'Guias Emitidas' : 'Issued Invoices' %></h2>
+        <form method="get" action="/hms/admin/billing.php">
+          <select class="form-select form-select-sm" name="status" onchange="this.form.submit()">
+            <option value=""><%= t('common.all') %></option>
+            <option value="Paid" <%= statusFilter === 'Paid' ? 'selected' : '' %>><%= t('status.Paid') %></option>
+            <option value="Unpaid" <%= statusFilter === 'Unpaid' ? 'selected' : '' %>><%= t('status.Unpaid') %></option>
+          </select>
+        </form>
+      </div>
+      <div class="table-responsive">
+        <table class="hms-table" data-sortable>
+          <thead>
+          <tr>
+            <th data-sort>#</th>
+            <th data-sort><%= t('common.patient') %></th>
+            <th data-sort><%= lang === 'pt' ? 'Descrição' : 'Description' %></th>
+            <th data-sort class="text-end"><%= lang === 'pt' ? 'Valor' : 'Amount' %></th>
+            <th data-sort><%= t('common.status') %></th>
+            <th class="text-end"><%= t('common.actions') %></th>
+          </tr>
+          </thead>
+          <tbody>
+          <% invoices.forEach(function(inv) { %>
+            <tr>
+              <td class="tabular text-muted">#<%= inv.id %></td>
+              <td class="fw-semibold"><%= inv.patientName %></td>
+              <td>
+                <div><%= inv.description %></div>
+                <div class="hms-meta-line">
+                  <span><%= inv.method %></span>
+                  <span aria-hidden="true">·</span>
+                  <span class="tabular"><%= inv.issuedAt %></span>
+                </div>
+              </td>
+              <td class="text-end tabular fw-semibold">R$ <%= Number(inv.amount).toFixed(2) %></td>
+              <td><%- statusBadge(inv.status) %></td>
+              <td class="text-end">
+                <% if (inv.status === 'Unpaid') { %>
+                  <form method="post" action="/hms/admin/billing.php" class="d-inline">
+                    <input type="hidden" name="action" value="mark_paid">
+                    <input type="hidden" name="id" value="<%= inv.id %>">
+                    <button class="btn btn-sm btn-outline-primary" type="submit"><%= lang === 'pt' ? 'Dar Baixa' : 'Mark Paid' %></button>
+                  </form>
+                <% } else { %>
+                  <span class="small text-muted tabular"><%= inv.paidAt %></span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+          <% if (!invoices.length) { %>
+            <tr><td colspan="6" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
+          <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

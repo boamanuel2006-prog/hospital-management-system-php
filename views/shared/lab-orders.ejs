@@ -1,0 +1,115 @@
+<%- include('../partials/layout-header', { title: t('sidebar.labExams'), role: role, active: 'labs' }) %>
+<div class="hms-page-header">
+  <div>
+    <h1><%= t('sidebar.labExams') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Solicitação de exames diagnósticos e publicação de laudos clínicos.' : 'Request diagnostic tests and publish laboratory results to patient records.' %></div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Solicitar Exame' : 'New Lab Order' %></h2>
+      <form method="post" action="<%= actionUrl %>">
+        <input type="hidden" name="action" value="create">
+        <div class="mb-2">
+          <label class="form-label"><%= t('common.patient') %></label>
+          <select class="form-select" name="patientUserId" required>
+            <% users.forEach(function(u) { %>
+              <option value="<%= u.id %>"><%= u.fullName %> (<%= u.email %>)</option>
+            <% }); %>
+          </select>
+        </div>
+        <% if (role === 'admin') { %>
+          <div class="mb-2">
+            <label class="form-label"><%= t('common.doctor') %></label>
+            <select class="form-select" name="doctorId" required>
+              <% doctors.forEach(function(d) { %>
+                <option value="<%= d.id %>"><%= d.doctorName %></option>
+              <% }); %>
+            </select>
+          </div>
+        <% } %>
+        <div class="mb-2">
+          <label class="form-label"><%= lang === 'pt' ? 'Nome do Exame' : 'Test / Exam Name' %></label>
+          <input class="form-control" name="testName" placeholder="<%= lang === 'pt' ? 'Ex: Hemograma Completo, Raio-X Tórax' : 'e.g. Complete Blood Count, Chest X-Ray' %>" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label"><%= lang === 'pt' ? 'Categoria' : 'Category' %></label>
+          <select class="form-select" name="category">
+            <option value="Hematology"><%= lang === 'pt' ? 'Hematologia' : 'Hematology' %></option>
+            <option value="Biochemistry"><%= lang === 'pt' ? 'Bioquímica' : 'Biochemistry' %></option>
+            <option value="Radiology"><%= lang === 'pt' ? 'Radiologia' : 'Radiology' %></option>
+            <option value="Imaging"><%= lang === 'pt' ? 'Imagem / Tomografia' : 'Imaging' %></option>
+          </select>
+        </div>
+        <button class="hms-btn-primary w-100" type="submit"><%= lang === 'pt' ? 'Emitir Solicitação' : 'Submit Order' %></button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="hms-surface-card p-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h5 mb-0"><%= lang === 'pt' ? 'Pedidos de Exame' : 'Diagnostic Orders' %></h2>
+        <form class="d-flex gap-2" method="get" action="<%= actionUrl %>">
+          <select class="form-select form-select-sm" name="status" onchange="this.form.submit()">
+            <option value=""><%= t('common.all') %></option>
+            <option value="In Analysis" <%= statusFilter === 'In Analysis' ? 'selected' : '' %>><%= t('status.In Analysis') %></option>
+            <option value="Completed" <%= statusFilter === 'Completed' ? 'selected' : '' %>><%= t('status.Completed') %></option>
+          </select>
+        </form>
+      </div>
+      <div class="table-responsive">
+        <table class="hms-table" data-sortable>
+          <thead>
+          <tr>
+            <th data-sort>#</th>
+            <th data-sort><%= t('common.patient') %></th>
+            <th data-sort><%= lang === 'pt' ? 'Exame' : 'Exam' %></th>
+            <th data-sort><%= t('common.status') %></th>
+            <th><%= lang === 'pt' ? 'Laudo / Ação' : 'Result / Action' %></th>
+          </tr>
+          </thead>
+          <tbody>
+          <% orders.forEach(function(order) { %>
+            <tr>
+              <td class="tabular text-muted">#<%= order.id %></td>
+              <td>
+                <div class="fw-semibold"><%= order.patientName %></div>
+                <div class="hms-meta-line"><span><%= order.doctorName %></span></div>
+              </td>
+              <td>
+                <div class="fw-semibold"><%= order.testName %></div>
+                <div class="hms-meta-line">
+                  <span><%= order.category %></span>
+                  <span aria-hidden="true">·</span>
+                  <span class="tabular"><%= order.orderedAt %></span>
+                </div>
+              </td>
+              <td><%- statusBadge(order.status) %></td>
+              <td>
+                <% if (order.status !== 'Completed') { %>
+                  <form method="post" action="<%= actionUrl %>" class="d-flex gap-2">
+                    <input type="hidden" name="action" value="complete">
+                    <input type="hidden" name="id" value="<%= order.id %>">
+                    <input class="form-control form-control-sm" name="resultSummary" placeholder="<%= lang === 'pt' ? 'Inserir laudo...' : 'Enter findings...' %>" required>
+                    <button class="btn btn-sm btn-primary" type="submit"><%= lang === 'pt' ? 'Liberar' : 'Publish' %></button>
+                  </form>
+                <% } else { %>
+                  <div class="small"><%= order.resultSummary %></div>
+                  <div class="small text-muted tabular"><%= order.completedAt %></div>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+          <% if (!orders.length) { %>
+            <tr><td colspan="5" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
+          <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

@@ -1,77 +1,77 @@
-<%- include('../partials/layout-header', { title: 'Doctor Appointments', role: 'doctor', active: 'appointments' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.appointments'), role: 'doctor', active: 'appointments' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Appointments</h1>
-    <div class="text-muted">Review visits, approve pending requests, complete visits, and open prescriptions.</div>
+    <h1><%= t('sidebar.appointments') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Revise consultas, aprove solicitações, conclua atendimentos e emita prescrições.' : 'Review visits, approve pending requests, complete visits, and open prescriptions.' %></div>
   </div>
-  <a class="btn btn-primary" href="/hms/doctor/prescriptions.php"><i class="bi bi-file-medical me-1"></i>Prescription</a>
+  <a class="hms-btn-primary" href="/hms/doctor/prescriptions.php"><i class="bi bi-file-medical"></i><%= t('sidebar.prescriptions') %></a>
 </div>
 
-<div class="hms-card p-3 mb-3">
+<div class="hms-surface-card p-3 mb-3">
   <form class="row g-3 align-items-end" method="get" action="/hms/doctor/appointment-history.php">
     <div class="col-md-4">
-      <label class="form-label">Search</label>
-      <input class="form-control" name="q" value="<%= q %>" placeholder="Patient, email, specialization">
+      <label class="form-label"><%= lang === 'pt' ? 'Buscar' : 'Search' %></label>
+      <input class="form-control" name="q" value="<%= q %>" placeholder="<%= lang === 'pt' ? 'Paciente, e-mail, especialidade' : 'Patient, email, specialization' %>">
     </div>
     <div class="col-md-3">
-      <label class="form-label">Status</label>
+      <label class="form-label"><%= t('common.status') %></label>
       <select class="form-select" name="status">
-        <option value="">All</option>
+        <option value=""><%= t('common.all') %></option>
         <% ['Pending', 'Approved', 'Completed', 'Cancelled'].forEach(function(option) { %>
-          <option value="<%= option %>" <%= status === option ? 'selected' : '' %>><%= option %></option>
+          <option value="<%= option %>" <%= status === option ? 'selected' : '' %>><%= t('status.' + option) %></option>
         <% }); %>
       </select>
     </div>
     <div class="col-md-3">
-      <label class="form-label">Date</label>
+      <label class="form-label"><%= t('common.date') %></label>
       <input class="form-control" type="date" name="date" value="<%= date %>">
     </div>
     <div class="col-md-2 d-grid">
-      <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Filter</button>
+      <button class="hms-btn-primary" type="submit"><i class="bi bi-search"></i><%= t('common.filter') %></button>
     </div>
   </form>
 </div>
 
-<div class="hms-card p-3">
+<div class="hms-surface-card p-3">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0" data-sortable>
+    <table class="hms-table" data-sortable>
       <thead>
       <tr>
         <th data-sort>#</th>
-        <th data-sort>Patient</th>
-        <th data-sort>Date / Time</th>
-        <th data-sort>Status</th>
-        <th class="text-end">Manage</th>
+        <th data-sort><%= t('common.patient') %></th>
+        <th data-sort><%= t('common.date') %> / <%= t('common.time') %></th>
+        <th data-sort><%= t('common.status') %></th>
+        <th class="text-end"><%= t('common.actions') %></th>
       </tr>
       </thead>
       <tbody>
       <% appointments.forEach(function(appointment) { %>
         <tr>
-          <td><%= appointment.id %></td>
+          <td class="tabular text-muted">#<%= appointment.id %></td>
           <td>
             <div class="fw-semibold"><%= appointment.fullName %></div>
             <div class="small text-muted"><%= appointment.email %></div>
           </td>
-          <td><%= appointment.appointmentDate %> <%= appointment.appointmentTime %></td>
+          <td class="tabular"><%= appointment.appointmentDate %> <%= appointment.appointmentTime %></td>
           <td><%- statusBadge(appointment.status) %></td>
           <td class="text-end">
             <div class="d-inline-flex flex-wrap gap-2 justify-content-end">
-              <a class="btn btn-sm btn-outline-success" href="/hms/doctor/prescriptions.php?appointment_id=<%= appointment.id %>">Record</a>
+              <a class="btn btn-sm btn-outline-success" href="/hms/doctor/prescriptions.php?appointment_id=<%= appointment.id %>"><%= lang === 'pt' ? 'Receita' : 'Record' %></a>
               <form method="post" action="/hms/doctor/appointment-history.php" class="d-inline-flex gap-2 align-items-center">
                 <input type="hidden" name="appointment_id" value="<%= appointment.id %>">
                 <select class="form-select form-select-sm" name="status">
                   <% ['Pending', 'Approved', 'Completed', 'Cancelled'].forEach(function(option) { %>
-                    <option value="<%= option %>" <%= appointment.status === option ? 'selected' : '' %>><%= option %></option>
+                    <option value="<%= option %>" <%= appointment.status === option ? 'selected' : '' %>><%= t('status.' + option) %></option>
                   <% }); %>
                 </select>
-                <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                <button class="btn btn-sm btn-primary" type="submit"><%= t('common.save') %></button>
               </form>
             </div>
           </td>
         </tr>
       <% }); %>
       <% if (!appointments.length) { %>
-        <tr><td colspan="5" class="text-center text-muted py-4">No appointments found.</td></tr>
+        <tr><td colspan="5" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
       <% } %>
       </tbody>
     </table>

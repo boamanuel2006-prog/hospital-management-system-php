@@ -1,40 +1,40 @@
-<%- include('../partials/layout-header', { title: 'Manage Users', role: 'admin', active: 'users' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.users'), role: 'admin', active: 'users' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Manage Users</h1>
-    <p class="text-muted mb-0">Review registered patient login accounts.</p>
+    <h1><%= t('sidebar.users') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Gerencie contas de acesso cadastradas no Portal do Paciente.' : 'Review registered patient login accounts.' %></div>
   </div>
 </div>
 
-<div class="hms-card p-4">
+<div class="hms-surface-card p-3">
   <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
-    <h2 class="h5 mb-0">Patient Accounts</h2>
-    <input type="search" class="form-control" style="max-width: 320px;" placeholder="Search users..." data-table-search="#usersTable">
+    <h2 class="h5 mb-0"><%= t('sidebar.users') %></h2>
+    <input type="search" class="form-control form-control-sm" style="max-width: 320px;" placeholder="<%= t('common.search') %>" data-table-search="#usersTable">
   </div>
   <div class="table-responsive">
-    <table class="table table-hover align-middle" id="usersTable" data-sortable>
+    <table class="hms-table" id="usersTable" data-sortable>
       <thead>
       <tr>
         <th data-sort>#</th>
-        <th data-sort>Name</th>
-        <th data-sort>City</th>
-        <th data-sort>Gender</th>
-        <th data-sort>Email</th>
-        <th data-sort>Registered</th>
-        <th class="text-end">Action</th>
+        <th data-sort><%= t('home.fullName') %></th>
+        <th data-sort><%= t('auth.city') %></th>
+        <th data-sort><%= t('auth.gender') %></th>
+        <th data-sort><%= t('home.email') %></th>
+        <th data-sort><%= lang === 'pt' ? 'Cadastro' : 'Registered' %></th>
+        <th class="text-end"><%= t('common.actions') %></th>
       </tr>
       </thead>
       <tbody>
       <% users.forEach(function(user, index) { %>
         <tr>
-          <td><%= index + 1 %></td>
+          <td class="tabular text-muted"><%= index + 1 %></td>
           <td class="fw-semibold"><%= user.fullName %></td>
           <td><%= user.city %></td>
           <td><%= user.gender %></td>
           <td><%= user.email %></td>
-          <td><%= user.regDate %></td>
+          <td class="tabular"><%= user.regDate %></td>
           <td class="text-end">
-            <form method="post" action="/hms/admin/manage-users.php" class="d-inline" onsubmit="return confirm('Delete this user account?');">
+            <form method="post" action="/hms/admin/manage-users.php" class="d-inline" onsubmit="return confirm('<%= lang === 'pt' ? 'Excluir esta conta?' : 'Delete this user account?' %>');">
               <input type="hidden" name="id" value="<%= user.id %>">
               <button type="submit" name="delete" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
             </form>
@@ -42,7 +42,7 @@
         </tr>
       <% }); %>
       <% if (!users.length) { %>
-        <tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>
+        <tr><td colspan="7" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
       <% } %>
       </tbody>
     </table>

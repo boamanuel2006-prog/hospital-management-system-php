@@ -1,44 +1,44 @@
-<%- include('../partials/layout-header', { title: 'Query Details', role: 'admin', active: 'queries' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.queries'), role: 'admin', active: 'queries' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Query Details</h1>
-    <p class="text-muted mb-0">Review and respond to a public contact query.</p>
+    <h1><%= lang === 'pt' ? 'Detalhes da Mensagem' : 'Query Details' %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Revise e registre o parecer de atendimento para a mensagem.' : 'Review and respond to a public contact query.' %></div>
   </div>
-  <a class="btn btn-light" href="<%= !query.AdminRemark ? '/hms/admin/unread-queries.php' : '/hms/admin/read-query.php' %>">Back to Queries</a>
+  <a class="hms-btn-secondary" href="<%= !query.AdminRemark ? '/hms/admin/unread-queries.php' : '/hms/admin/read-query.php' %>"><%= t('sidebar.queries') %></a>
 </div>
 
 <div class="row g-4">
   <div class="col-lg-7">
-    <div class="hms-card p-4">
-      <h2 class="h5 mb-3">Submitted Query</h2>
+    <div class="hms-surface-card p-4">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Mensagem Recebida' : 'Submitted Query' %></h2>
       <dl class="row mb-0">
-        <dt class="col-sm-4 text-muted">Full name</dt>
+        <dt class="col-sm-4 text-muted"><%= t('home.fullName') %></dt>
         <dd class="col-sm-8"><%= query.fullname %></dd>
-        <dt class="col-sm-4 text-muted">Email</dt>
+        <dt class="col-sm-4 text-muted"><%= t('home.email') %></dt>
         <dd class="col-sm-8"><%= query.email %></dd>
-        <dt class="col-sm-4 text-muted">Contact</dt>
-        <dd class="col-sm-8"><%= query.contactno %></dd>
-        <dt class="col-sm-4 text-muted">Message</dt>
+        <dt class="col-sm-4 text-muted"><%= t('home.phone') %></dt>
+        <dd class="col-sm-8 tabular"><%= query.contactno %></dd>
+        <dt class="col-sm-4 text-muted"><%= t('home.message') %></dt>
         <dd class="col-sm-8"><%= query.message %></dd>
-        <dt class="col-sm-4 text-muted">Query date</dt>
-        <dd class="col-sm-8"><%= query.PostingDate %></dd>
+        <dt class="col-sm-4 text-muted"><%= t('common.date') %></dt>
+        <dd class="col-sm-8 tabular"><%= query.PostingDate %></dd>
       </dl>
     </div>
   </div>
   <div class="col-lg-5">
-    <div class="hms-card p-4">
-      <h2 class="h5 mb-3">Admin Remark</h2>
+    <div class="hms-surface-card p-4">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Parecer da Administração' : 'Admin Remark' %></h2>
       <% if (!query.AdminRemark) { %>
         <form method="post" action="/hms/admin/query-details.php?id=<%= query.id %>">
-          <label class="form-label" for="adminremark">Response note</label>
+          <label class="form-label" for="adminremark"><%= lang === 'pt' ? 'Observação de Resposta' : 'Response note' %></label>
           <textarea class="form-control" id="adminremark" name="adminremark" rows="6" required></textarea>
-          <button type="submit" name="update" class="btn btn-primary mt-3">
-            <i class="bi bi-send me-1"></i>Save Remark
+          <button type="submit" name="update" class="hms-btn-primary mt-3">
+            <i class="bi bi-send"></i><%= t('common.save') %>
           </button>
         </form>
       <% } else { %>
         <p><%= query.AdminRemark %></p>
-        <p class="text-muted small mb-0">Last updated: <%= query.LastupdationDate || 'Not available' %></p>
+        <p class="text-muted small mb-0 tabular"><%= lang === 'pt' ? 'Atualizado em' : 'Last updated' %>: <%= query.LastupdationDate || '-' %></p>
       <% } %>
     </div>
   </div>

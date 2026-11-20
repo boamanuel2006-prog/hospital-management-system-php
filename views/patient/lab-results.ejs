@@ -1,0 +1,52 @@
+<%- include('../partials/layout-header', { title: t('sidebar.myExams'), role: 'patient', active: 'labs' }) %>
+<div class="hms-page-header">
+  <div>
+    <h1><%= t('sidebar.myExams') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Acompanhe solicitações laboratoriais, exames de imagem e laudos liberados.' : 'Track laboratory requests, diagnostic imaging, and published reports.' %></div>
+  </div>
+</div>
+
+<div class="hms-surface-card p-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="h5 mb-0"><%= lang === 'pt' ? 'Exames Solicitados' : 'Requested Exams' %></h2>
+    <span class="hms-meta-line"><strong class="tabular text-dark"><%= orders.length %></strong><span><%= t('common.total') %></span></span>
+  </div>
+  <div class="table-responsive">
+    <table class="hms-table" data-sortable>
+      <thead>
+      <tr>
+        <th data-sort>#</th>
+        <th data-sort><%= lang === 'pt' ? 'Exame' : 'Exam' %></th>
+        <th data-sort><%= t('common.doctor') %></th>
+        <th data-sort><%= t('common.date') %></th>
+        <th data-sort><%= t('common.status') %></th>
+        <th><%= lang === 'pt' ? 'Resultado / Laudo' : 'Result Summary' %></th>
+      </tr>
+      </thead>
+      <tbody>
+      <% orders.forEach(function(order) { %>
+        <tr>
+          <td class="tabular text-muted">#<%= order.id %></td>
+          <td>
+            <div class="fw-semibold"><%= order.testName %></div>
+            <div class="hms-meta-line"><span><%= order.category %></span></div>
+          </td>
+          <td><%= order.doctorName %></td>
+          <td class="tabular"><%= order.orderedAt %></td>
+          <td><%- statusBadge(order.status) %></td>
+          <td>
+            <div><%= order.resultSummary %></div>
+            <% if (order.completedAt) { %>
+              <div class="small text-muted tabular"><%= lang === 'pt' ? 'Liberado em' : 'Published' %>: <%= order.completedAt %></div>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!orders.length) { %>
+        <tr><td colspan="6" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/layout-footer') %>

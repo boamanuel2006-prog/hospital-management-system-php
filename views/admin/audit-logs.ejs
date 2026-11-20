@@ -1,58 +1,58 @@
-<%- include('../partials/layout-header', { title: 'Audit Logs', role: 'admin', active: 'audit' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.audit'), role: 'admin', active: 'audit' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Audit Logs</h1>
-    <div class="text-muted">Track sensitive workflow changes and security-relevant actions.</div>
+    <h1><%= t('sidebar.audit') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Rastreabilidade completa de ações clínicas, financeiras e administrativas.' : 'Track sensitive workflow changes and security-relevant actions.' %></div>
   </div>
 </div>
 
-<div class="hms-card p-3 mb-3">
+<div class="hms-surface-card p-3 mb-3">
   <form class="row g-3 align-items-end" method="get" action="/hms/admin/audit-logs.php">
     <div class="col-md-4">
-      <label class="form-label">Actor</label>
+      <label class="form-label"><%= lang === 'pt' ? 'Perfil / Ator' : 'Actor' %></label>
       <select class="form-select" name="actor">
-        <option value="">All</option>
+        <option value=""><%= t('common.all') %></option>
         <% ['admin', 'doctor', 'patient'].forEach(function(option) { %>
-          <option value="<%= option %>" <%= actor === option ? 'selected' : '' %>><%= option %></option>
+          <option value="<%= option %>" <%= actor === option ? 'selected' : '' %>><%= t('roles.' + option) %></option>
         <% }); %>
       </select>
     </div>
     <div class="col-md-6">
-      <label class="form-label">Action</label>
-      <input class="form-control" name="action" value="<%= action %>" placeholder="appointment, prescription, availability">
+      <label class="form-label"><%= lang === 'pt' ? 'Ação' : 'Action' %></label>
+      <input class="form-control" name="action" value="<%= action %>" placeholder="appointment, triage, bed, pharmacy">
     </div>
     <div class="col-md-2 d-grid">
-      <button class="btn btn-primary" type="submit">Filter</button>
+      <button class="hms-btn-primary" type="submit"><%= t('common.filter') %></button>
     </div>
   </form>
 </div>
 
-<div class="hms-card p-3">
+<div class="hms-surface-card p-3">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0" data-sortable>
+    <table class="hms-table" data-sortable>
       <thead>
       <tr>
-        <th data-sort>Date</th>
-        <th data-sort>Actor</th>
-        <th data-sort>Action</th>
-        <th data-sort>Entity</th>
-        <th>Details</th>
+        <th data-sort><%= t('common.date') %></th>
+        <th data-sort><%= lang === 'pt' ? 'Ator' : 'Actor' %></th>
+        <th data-sort><%= lang === 'pt' ? 'Evento' : 'Action' %></th>
+        <th data-sort><%= lang === 'pt' ? 'Entidade' : 'Entity' %></th>
+        <th><%= lang === 'pt' ? 'Detalhes' : 'Details' %></th>
         <th data-sort>IP</th>
       </tr>
       </thead>
       <tbody>
       <% logs.forEach(function(log) { %>
         <tr>
-          <td><%= log.created_at %></td>
-          <td><%= log.actor_type %> #<%= log.actor_id %></td>
-          <td><%= log.action %></td>
-          <td><%= log.entity_type %> #<%= log.entity_id %></td>
+          <td class="tabular"><%= log.created_at %></td>
+          <td class="tabular"><%= log.actor_type %> #<%= log.actor_id %></td>
+          <td><code class="text-dark"><%= log.action %></code></td>
+          <td class="tabular"><%= log.entity_type %> #<%= log.entity_id %></td>
           <td><%= log.details %></td>
-          <td><%= log.ip_address %></td>
+          <td class="tabular text-muted"><%= log.ip_address %></td>
         </tr>
       <% }); %>
       <% if (!logs.length) { %>
-        <tr><td colspan="6" class="text-center text-muted py-4">No audit events found.</td></tr>
+        <tr><td colspan="6" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
       <% } %>
       </tbody>
     </table>

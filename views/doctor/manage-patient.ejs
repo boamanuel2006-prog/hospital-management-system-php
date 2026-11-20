@@ -1,39 +1,39 @@
-<%- include('../partials/layout-header', { title: 'Manage Patients', role: 'doctor', active: 'patients' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.patients'), role: 'doctor', active: 'patients' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Manage Patients</h1>
-    <p class="text-muted mb-0">View, update, and review patients assigned to you.</p>
+    <h1><%= t('sidebar.patients') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Consulte, atualize e registre evoluções nos prontuários sob sua responsabilidade.' : 'View, update, and review clinical records assigned to you.' %></div>
   </div>
-  <a class="btn btn-primary" href="/hms/doctor/add-patient.php"><i class="bi bi-person-plus me-1"></i>Add Patient</a>
+  <a class="hms-btn-primary" href="/hms/doctor/add-patient.php"><i class="bi bi-person-plus"></i><%= lang === 'pt' ? 'Novo Paciente' : 'Add Patient' %></a>
 </div>
 
-<div class="hms-card p-4">
+<div class="hms-surface-card p-3">
   <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
-    <h2 class="h5 mb-0">Patient List</h2>
-    <input type="search" class="form-control" style="max-width: 320px;" placeholder="Search patients..." data-table-search="#patientsTable">
+    <h2 class="h5 mb-0"><%= lang === 'pt' ? 'Lista de Pacientes' : 'Patient List' %></h2>
+    <input type="search" class="form-control form-control-sm" style="max-width: 320px;" placeholder="<%= t('common.search') %>" data-table-search="#patientsTable">
   </div>
   <div class="table-responsive">
-    <table class="table table-hover align-middle" id="patientsTable" data-sortable>
+    <table class="hms-table" id="patientsTable" data-sortable>
       <thead>
       <tr>
         <th data-sort>#</th>
-        <th data-sort>Patient</th>
-        <th data-sort>Contact</th>
-        <th data-sort>Gender</th>
-        <th data-sort>Created</th>
-        <th data-sort>Updated</th>
-        <th class="text-end">Action</th>
+        <th data-sort><%= t('common.patient') %></th>
+        <th data-sort><%= t('home.phone') %></th>
+        <th data-sort><%= t('auth.gender') %></th>
+        <th data-sort><%= lang === 'pt' ? 'Cadastro' : 'Created' %></th>
+        <th data-sort><%= lang === 'pt' ? 'Atualização' : 'Updated' %></th>
+        <th class="text-end"><%= t('common.actions') %></th>
       </tr>
       </thead>
       <tbody>
       <% patients.forEach(function(patient, index) { %>
         <tr>
-          <td><%= index + 1 %></td>
+          <td class="tabular text-muted"><%= index + 1 %></td>
           <td class="fw-semibold"><%= patient.PatientName %></td>
-          <td><%= patient.PatientContno %></td>
+          <td class="tabular"><%= patient.PatientContno %></td>
           <td><%= patient.PatientGender %></td>
-          <td><%= patient.CreationDate %></td>
-          <td><%= patient.UpdationDate || 'Not updated' %></td>
+          <td class="tabular"><%= patient.CreationDate %></td>
+          <td class="tabular text-muted"><%= patient.UpdationDate || '-' %></td>
           <td class="text-end">
             <a class="btn btn-sm btn-outline-primary" href="/hms/doctor/edit-patient.php?editid=<%= patient.ID %>"><i class="bi bi-pencil-square"></i></a>
             <a class="btn btn-sm btn-outline-secondary" href="/hms/doctor/view-patient.php?viewid=<%= patient.ID %>"><i class="bi bi-eye"></i></a>
@@ -41,7 +41,7 @@
         </tr>
       <% }); %>
       <% if (!patients.length) { %>
-        <tr><td colspan="7" class="text-center text-muted py-4">No patients found.</td></tr>
+        <tr><td colspan="7" class="text-center text-muted py-4"><%= t('common.noRecords') %></td></tr>
       <% } %>
       </tbody>
     </table>

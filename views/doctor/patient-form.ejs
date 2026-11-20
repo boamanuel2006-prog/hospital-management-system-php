@@ -1,47 +1,47 @@
-<%- include('../partials/layout-header', { title: patient ? 'Edit Patient' : 'Add Patient', role: 'doctor', active: 'patients' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: patient ? t('common.edit') : t('common.add'), role: 'doctor', active: 'patients' }) %>
+<div class="hms-page-header">
   <div>
-    <h1><%= patient ? 'Update Patient' : 'Add Patient' %></h1>
-    <div class="text-muted">Record patient demographics and clinical notes.</div>
+    <h1><%= patient ? (lang === 'pt' ? 'Atualizar Paciente' : 'Update Patient') : (lang === 'pt' ? 'Novo Paciente' : 'Add Patient') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Dados demográficos e anamnese inicial.' : 'Record patient demographics and clinical notes.' %></div>
   </div>
-  <a class="btn btn-light" href="/hms/doctor/manage-patient.php">Back to Patients</a>
+  <a class="hms-btn-secondary" href="/hms/doctor/manage-patient.php"><%= t('sidebar.patients') %></a>
 </div>
-<div class="hms-card p-4" style="max-width:760px">
+<div class="hms-surface-card p-4" style="max-width:760px">
   <form method="post" action="<%= actionUrl %>">
     <div class="row g-3">
       <div class="col-md-6">
-        <label class="form-label">Patient Name</label>
+        <label class="form-label"><%= t('home.fullName') %></label>
         <input class="form-control" name="patname" value="<%= patient ? patient.PatientName : '' %>" required>
       </div>
       <div class="col-md-6">
-        <label class="form-label">Contact Number</label>
+        <label class="form-label"><%= t('home.phone') %></label>
         <input class="form-control" name="patcontact" value="<%= patient ? patient.PatientContno : '' %>" required>
       </div>
       <div class="col-md-6">
-        <label class="form-label">Email</label>
+        <label class="form-label"><%= t('home.email') %></label>
         <input type="email" class="form-control" name="patemail" value="<%= patient ? patient.PatientEmail : '' %>" required>
       </div>
       <div class="col-md-3">
-        <label class="form-label">Gender</label>
+        <label class="form-label"><%= t('auth.gender') %></label>
         <select class="form-select" name="gender">
-          <option value="Male" <%= patient && String(patient.PatientGender).toLowerCase() === 'male' ? 'selected' : '' %>>Male</option>
-          <option value="Female" <%= patient && String(patient.PatientGender).toLowerCase() === 'female' ? 'selected' : '' %>>Female</option>
+          <option value="Male" <%= patient && String(patient.PatientGender).toLowerCase() === 'male' ? 'selected' : '' %>><%= t('auth.male') %></option>
+          <option value="Female" <%= patient && String(patient.PatientGender).toLowerCase() === 'female' ? 'selected' : '' %>><%= t('auth.female') %></option>
         </select>
       </div>
       <div class="col-md-3">
-        <label class="form-label">Age</label>
+        <label class="form-label"><%= lang === 'pt' ? 'Idade' : 'Age' %></label>
         <input type="number" class="form-control" name="patage" value="<%= patient ? patient.PatientAge : '' %>" required>
       </div>
       <div class="col-12">
-        <label class="form-label">Address</label>
+        <label class="form-label"><%= t('home.addressLabel') %></label>
         <textarea class="form-control" name="pataddress" rows="2" required><%= patient ? patient.PatientAdd : '' %></textarea>
       </div>
       <div class="col-12">
-        <label class="form-label">Medical History</label>
+        <label class="form-label"><%= lang === 'pt' ? 'Histórico Clínico Inicial' : 'Medical History' %></label>
         <textarea class="form-control" name="medhis" rows="3" required><%= patient ? patient.PatientMedhis : '' %></textarea>
       </div>
     </div>
-    <button class="btn btn-primary mt-3" type="submit"><%= patient ? 'Update Patient' : 'Add Patient' %></button>
+    <button class="hms-btn-primary mt-3" type="submit"><%= t('common.save') %></button>
   </form>
 </div>
 <%- include('../partials/layout-footer') %>

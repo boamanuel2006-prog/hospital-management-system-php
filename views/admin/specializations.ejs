@@ -1,44 +1,44 @@
-<%- include('../partials/layout-header', { title: 'Doctor Specializations', role: 'admin', active: 'specializations' }) %>
-<div class="hms-page-title">
+<%- include('../partials/layout-header', { title: t('sidebar.specializations'), role: 'admin', active: 'specializations' }) %>
+<div class="hms-page-header">
   <div>
-    <h1>Doctor Specializations</h1>
-    <div class="text-muted">Manage clinical departments and specialties.</div>
+    <h1><%= t('sidebar.specializations') %></h1>
+    <div class="text-muted"><%= lang === 'pt' ? 'Gerencie os departamentos clínicos e especialidades médicas.' : 'Manage clinical departments and specialties.' %></div>
   </div>
 </div>
 
-<div class="row g-3">
+<div class="row g-4">
   <div class="col-lg-4">
-    <div class="hms-card p-3">
-      <h2 class="h5 mb-3">Add Specialization</h2>
+    <div class="hms-surface-card p-3">
+      <h2 class="h5 mb-3"><%= lang === 'pt' ? 'Nova Especialidade' : 'Add Specialization' %></h2>
       <form method="post" action="/hms/admin/doctor-specilization.php">
         <div class="mb-3">
-          <label class="form-label">Specialization Name</label>
+          <label class="form-label"><%= t('common.specialty') %></label>
           <input class="form-control" name="doctorspecilization" required>
         </div>
-        <button class="btn btn-primary w-100" type="submit">Add Specialization</button>
+        <button class="hms-btn-primary w-100" type="submit"><%= t('common.add') %></button>
       </form>
     </div>
   </div>
   <div class="col-lg-8">
-    <div class="hms-card p-3">
+    <div class="hms-surface-card p-3">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" data-sortable>
+        <table class="hms-table" data-sortable>
           <thead>
           <tr>
             <th data-sort>#</th>
-            <th data-sort>Specialization</th>
-            <th data-sort>Created</th>
-            <th class="text-end">Action</th>
+            <th data-sort><%= t('common.specialty') %></th>
+            <th data-sort><%= lang === 'pt' ? 'Cadastro' : 'Created' %></th>
+            <th class="text-end"><%= t('common.actions') %></th>
           </tr>
           </thead>
           <tbody>
           <% specializations.forEach(function(s, i) { %>
             <tr>
-              <td><%= i + 1 %></td>
+              <td class="tabular text-muted"><%= i + 1 %></td>
               <td class="fw-semibold"><%= s.specilization %></td>
-              <td><%= s.creationDate %></td>
+              <td class="tabular"><%= s.creationDate %></td>
               <td class="text-end">
-                <form method="post" action="/hms/admin/doctor-specilization.php" class="d-inline" onsubmit="return confirm('Delete this specialization?');">
+                <form method="post" action="/hms/admin/doctor-specilization.php" class="d-inline" onsubmit="return confirm('<%= lang === 'pt' ? 'Excluir esta especialidade?' : 'Delete this specialization?' %>');">
                   <input type="hidden" name="action" value="delete">
                   <input type="hidden" name="id" value="<%= s.id %>">
                   <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
